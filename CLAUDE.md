@@ -49,6 +49,7 @@ Rules:
 - `Contracts` holds every type that crosses an area boundary (trace snapshot JSON, viz frame JSON, exercise result, content models). Areas depend on `Contracts`, not on each other, where possible.
 - Logic that doesn't need UIKit (content parsing, diagram parser, FSRS, trace models) stays Foundation-only so `swift test` runs on Linux.
 - Python support code is tested with plain `python3 -m pytest` on Linux.
+- Non-Swift contracts (the Python call API, recorded output files) are in `docs/contracts.md`.
 
 ## Using subagents
 
