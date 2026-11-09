@@ -7,12 +7,28 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		E6C859FC3634A2B2AE721A8F /* python in Resources */ = {isa = PBXBuildFile; fileRef = 5DDACBAE461A01214B740DA0 /* python */; };
+		2EB1E3B156C3A4DD6DF27044 /* Python.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1AA1FD2938ACBB7C738EA3D7 /* Python.xcframework */; };
 		E81C85555EDA03A0356B7A32 /* CSKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0183D34699E2159E4C311D10 /* CSKit */; };
+		FAA0D6BD895ECE81D505E12A /* Python.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1AA1FD2938ACBB7C738EA3D7 /* Python.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		DF851F8BFC6CC1B315662F4F /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				FAA0D6BD895ECE81D505E12A /* Python.xcframework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		17D6A18892DA1ABFC2CC58CA /* CSKit */ = {isa = PBXFileReference; lastKnownFileType = folder; name = CSKit; path = Packages/CSKit; sourceTree = SOURCE_ROOT; };
+		1AA1FD2938ACBB7C738EA3D7 /* Python.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Python.xcframework; path = Frameworks/Python.xcframework; sourceTree = "<group>"; };
 		5DDACBAE461A01214B740DA0 /* python */ = {isa = PBXFileReference; lastKnownFileType = folder; name = python; path = Resources/python; sourceTree = SOURCE_ROOT; };
 		86F3DF2A02AA896F2CD4EADA /* CS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -35,6 +51,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E81C85555EDA03A0356B7A32 /* CSKit in Frameworks */,
+				2EB1E3B156C3A4DD6DF27044 /* Python.xcframework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -47,6 +64,7 @@
 				56A48F10CC37C62BCAA987B0 /* CS */,
 				30F2256FA7D484C4E4E0C4CF /* Packages */,
 				3C7843F5504200053B1BF874 /* Resources */,
+				8A2D825E2464D3E3899B36D7 /* Frameworks */,
 				2522C6FE2882D287783B7E75 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -75,6 +93,14 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		8A2D825E2464D3E3899B36D7 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				1AA1FD2938ACBB7C738EA3D7 /* Python.xcframework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -83,8 +109,10 @@
 			buildConfigurationList = F1C4331A62A8FEEAA0676522 /* Build configuration list for PBXNativeTarget "CS" */;
 			buildPhases = (
 				F1C594FD569E701015127234 /* Sources */,
+				5A0471B8A0C02C7528687BEE /* Process Python libraries */,
 				C5F0A60319B8299BAE9107F2 /* Resources */,
 				C9E7D7C79EC077C997101C8E /* Frameworks */,
+				DF851F8BFC6CC1B315662F4F /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -142,11 +170,32 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E6C859FC3634A2B2AE721A8F /* python in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		5A0471B8A0C02C7528687BEE /* Process Python libraries */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Process Python libraries";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -e\nXCFRAMEWORK=\"Frameworks/Python.xcframework\"\nif [ ! -f \"$PROJECT_DIR/$XCFRAMEWORK/build/utils.sh\" ]; then\n    echo \"error: $XCFRAMEWORK is missing. Run tools/fetch_python.sh.\"\n    exit 1\nfi\nsource \"$PROJECT_DIR/$XCFRAMEWORK/build/utils.sh\"\n\ninstall_stdlib \"$XCFRAMEWORK\"\nPYTHON_VER=$(ls -1 \"$CODESIGNING_FOLDER_PATH/python/lib\" | grep -E \"^python3\\.[0-9]+$\")\nSTDLIB=\"$CODESIGNING_FOLDER_PATH/python/lib/$PYTHON_VER\"\n\n# Unused by the app: tests, IDLE, Tk, and the CPython test extension modules.\nrm -rf \"$STDLIB/test\" \"$STDLIB/idlelib\" \"$STDLIB/tkinter\" \"$STDLIB/turtledemo\"\nfind \"$STDLIB/lib-dynload\" \\( -name \"_test*.so\" -o -name \"_ctypes_test.*\" \\\n    -o -name \"_xxtestfuzz.*\" -o -name \"xxlimited*\" -o -name \"xxsubtype.*\" \\) -delete\n\nprocess_dylibs \"$XCFRAMEWORK\" \"python/lib/$PYTHON_VER/lib-dynload\"\n\nrsync -a --delete --exclude \"/lib/\" --exclude \".gitkeep\" --exclude \"__pycache__\" \\\n    --exclude \".pytest_cache\" --exclude \"test_*.py\" --exclude \"/tests/\" --exclude \"conftest.py\" \\\n    \"$PROJECT_DIR/Resources/python/\" \"$CODESIGNING_FOLDER_PATH/python/\"\n";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		F1C594FD569E701015127234 /* Sources */ = {
@@ -224,9 +273,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Frameworks\"",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/Python.framework/Headers";
 				INFOPLIST_KEY_CFBundleDisplayName = CS;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
@@ -246,9 +303,17 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = NO;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"Frameworks\"",
+				);
 				GENERATE_INFOPLIST_FILE = YES;
+				HEADER_SEARCH_PATHS = "$(BUILT_PRODUCTS_DIR)/Python.framework/Headers";
 				INFOPLIST_KEY_CFBundleDisplayName = CS;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;

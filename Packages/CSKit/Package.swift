@@ -3,6 +3,11 @@ import PackageDescription
 
 // Foundation-only targets (Contracts, Content, Review, VisualsLayout) build and test on Linux.
 // UI targets wrap their sources in `#if canImport(UIKit)` so `swift test` still builds everywhere.
+
+// Headers for CPythonBridge. The simulator slice's headers are a superset of the device slice's
+// (pyconfig.h picks the architecture), so one path serves both.
+let packageDirectory = String(#filePath.dropLast("/Package.swift".count))
+let pythonFrameworkSlice = packageDirectory + "/../../Frameworks/Python.xcframework/ios-arm64_x86_64-simulator"
 let package = Package(
     name: "CSKit",
     platforms: [.iOS(.v26), .macOS(.v26)],
@@ -18,7 +23,19 @@ let package = Package(
     targets: [
         .target(name: "Contracts"),
         .target(name: "Content", dependencies: ["Contracts", "Yams"]),
-        .target(name: "Runtime", dependencies: ["Contracts"]),
+        // C bridge to the embedded interpreter. Compiles against Python.framework's headers on iOS
+        // (fetched by tools/fetch_python.sh) and to a stub elsewhere. The app target links and
+        // embeds Python.xcframework, which resolves the symbols.
+        .target(
+            name: "CPythonBridge",
+            cSettings: [
+                .unsafeFlags(
+                    ["-F", pythonFrameworkSlice, "-Wno-quoted-include-in-framework-header"],
+                    .when(platforms: [.iOS])
+                ),
+            ]
+        ),
+        .target(name: "Runtime", dependencies: ["Contracts", "CPythonBridge"]),
         .target(name: "Editor", dependencies: ["Contracts"]),
         .target(name: "VisualsLayout", dependencies: ["Contracts"]),
         .target(name: "Visuals", dependencies: ["Contracts", "VisualsLayout"]),
@@ -33,5 +50,6 @@ let package = Package(
         .testTarget(name: "ContentTests", dependencies: ["Content"]),
         .testTarget(name: "VisualsLayoutTests", dependencies: ["VisualsLayout"]),
         .testTarget(name: "ReviewTests", dependencies: ["Review"]),
+        .testTarget(name: "RuntimeTests", dependencies: ["Runtime"]),
     ]
 )

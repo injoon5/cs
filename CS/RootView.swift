@@ -1,8 +1,14 @@
+import Runtime
 import SwiftUI
 
 struct RootView: View {
     var body: some View {
         TabView {
+            #if DEBUG
+            Tab("Python", systemImage: "ladybug") {
+                PythonSmokeView()
+            }
+            #endif
             Tab("Learn", systemImage: "book") {
                 PlaceholderScreen(title: "Learn", symbol: "book")
             }
@@ -15,6 +21,10 @@ struct RootView: View {
             Tab("Review", systemImage: "rectangle.stack") {
                 PlaceholderScreen(title: "Review", symbol: "rectangle.stack")
             }
+        }
+        .task {
+            // Start the interpreter early so the first run doesn't pay for it.
+            await PythonRuntime.shared.start()
         }
     }
 }
