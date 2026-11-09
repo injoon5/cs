@@ -25,11 +25,11 @@ Rule: use the system's components and defaults before drawing anything custom. I
 
 - **Structure**: `TabView` (Learn, Practice, Playground, Review) with the iOS 26 Liquid Glass tab bar. `NavigationStack` with large titles. Sheets with detents for hints, results and settings.
 - **Materials**: Liquid Glass comes free with system bars, toolbars and sheets. Use `.glassEffect()` only on floating controls (Run button, visualizer playback bar). No custom gradients, shadows or cards.
-- **Type**: SF Pro via system text styles (`.title`, `.body`, `.footnote`), so Dynamic Type works. SF Mono for code and console. No hard-coded sizes.
+- **Type**: SF Pro via system text styles (`.title`, `.body`, `.footnote`). SF Mono for code and console. No hard-coded sizes.
 - **Color**: semantic colors only (`.primary`, `.secondary`, `Color(.systemBackground)`, grouped backgrounds). One accent color. Light and dark from day one. Editor theme follows Xcode's default light/dark.
 - **Icons**: SF Symbols, with symbol effects (`.bounce` on pass, `.replace` on Run/Stop).
 - **Lists**: `List` with `.insetGrouped` for topics and settings. Swipe actions, context menus, `ContentUnavailableView` for empty states.
-- **Motion**: default SwiftUI springs. Visualizer uses `matchedGeometryEffect` for swaps. Respect Reduce Motion.
+- **Motion**: default SwiftUI springs. Visualizer uses `matchedGeometryEffect` for swaps.
 - **Feedback**: `.sensoryFeedback(.success/.error)` on test results. No custom toasts.
 - **Keyboard**: input accessory bar above the keyboard for `:`, `()`, `[]`, `{}`, indent, outdent, undo, run. Hardware keyboard shortcuts via `.keyboardShortcut` (⌘R run, ⌘. stop).
 - **Platform touches**: Spotlight indexing of lessons, App Intents ("Continue lesson"), a widget showing today's review count, Share sheet for code.
@@ -47,7 +47,7 @@ Rule: use the system's components and defaults before drawing anything custom. I
 ### v2
 5. Visualizer: step through an algorithm on arrays, trees and graphs. Python reports states, SwiftUI draws them (see below).
 6. Review: daily queue of recall cards and re-solves, scheduled with FSRS.
-7. Hints from the on-device model.
+7. On-device AI tutor (see below).
 8. Complexity check: run a solution on growing inputs, plot time vs n (Swift Charts).
 
 ### Later
@@ -182,12 +182,28 @@ Apple frameworks, no dependency: SwiftData (+ CloudKit sync), Swift Charts (comp
 
 Keep the list this short. Visualizer, test runner and console are custom; no libraries for those.
 
+## On-device AI tutor (Foundation Models)
+
+Apple's on-device model (~3B parameters, iOS 26, needs an Apple Intelligence iPhone). Offline, free, private. Small, so it explains and nudges; tests and reference solutions stay the source of truth. Never grades.
+
+Features, in order of value:
+1. **Explain a failure**: on a failed test, send the code, the failing input, expected vs got, and the traceback. Get a short explanation of what went wrong, without fixed code.
+2. **Hint ladder**: when the hand-written hints run out, generate one more nudge from the exercise, the reference solution (hidden from the user) and the current code. Instruction: point at the idea, don't write code.
+3. **Explain this line**: select code in a lesson or the editor, ask what it does.
+4. **Review grading help**: for free-text recall cards, compare the answer to the card's answer and suggest Again/Hard/Good/Easy. The user confirms.
+5. **Variations**: generate new test inputs or a twist on a solved exercise. Validate by running the reference solution before showing.
+
+Design:
+- `@Generable` structs for every response (e.g. `Hint { text, focusLine? }`), so output is typed, not parsed.
+- Tools the model can call: `runCode(code, input)` and `runTests()` against the embedded Python, so explanations are checked against real execution.
+- Short prompts with the lesson's key idea included; the model's context is small (~4k tokens), so send only the relevant function, not whole files.
+- Stream responses into a sheet. A "Tutor" button appears only when `SystemLanguageModel.default.availability` is available.
+- Prompts live in one Swift file, tested with fixed examples from the content repo.
+
 ## Other things to decide
 
-- **On-device hints**: Foundation Models (Apple's on-device model, iOS 26, Apple Intelligence devices). Explain a failing test, give a nudge without the answer. Offline, free, private. Small model: use it for hints, never for grading.
 - **Sync**: SwiftData with CloudKit so iPhone and iPad share progress. Decide at milestone 5; adding it later means model constraints (all properties optional or defaulted, no unique constraints).
 - **Export**: progress and saved code as JSON, so a schema change or reinstall loses nothing.
-- **Accessibility**: visualizer frames need VoiceOver text ("swap index 2 and 5"). Editor must work with VoiceOver and large text.
 - **Timing**: complexity plots need repeated runs and a warm-up; show shape, not exact numbers.
 - **User code access**: Python can read/write app files. Fine for personal use; run code with the working directory set to a scratch folder.
 - **iPad**: plan layouts with `NavigationSplitView` from the start even if iPhone ships first.
