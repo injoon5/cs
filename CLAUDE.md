@@ -32,11 +32,11 @@ Packages/CSKit/          local Swift package, one target per area
     Exercises/           exercise UI, results
     Review/              FSRS, review queue
     Tutor/               Foundation Models features
-    Linux/               v86 web view host, Ghostty terminal, check agent bridge
+    Linux/               TinyEMU (C target) + Swift wrapper, Ghostty terminal, check agent bridge
     Store/               SwiftData models
     Contracts/           shared types only: protocols, Codable structs, JSON schemas
 Resources/python/        app_support.py, viz.py, trace.py
-Resources/linux/         v86 build, VM image, saved states (built by tools/linux)
+Resources/linux/         kernel, OpenSBI, rootfs, saved states (built by tools/linux)
 content/                 lessons, exercises, cards
 tools/                   content validator, Linux image build, scripts
 ```
@@ -44,7 +44,7 @@ tools/                   content validator, Linux image build, scripts
 Rules:
 - Use Xcode synchronized folders for the app target, so adding files never edits `project.pbxproj`.
 - `Contracts` holds every type that crosses an area boundary (trace snapshot JSON, viz frame JSON, exercise result, content models). Areas depend on `Contracts`, not on each other, where possible.
-- Logic that doesn't need UIKit (content parsing, diagram parser, FSRS, trace models) stays Foundation-only so `swift test` runs on Linux.
+- Logic that doesn't need UIKit (content parsing, diagram parser, FSRS, trace models, the TinyEMU core) stays Foundation-only so `swift test` runs on Linux.
 - Python support code is tested with plain `python3 -m pytest` on Linux.
 
 ## Using subagents
