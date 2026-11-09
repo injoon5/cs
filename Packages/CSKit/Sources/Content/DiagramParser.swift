@@ -138,6 +138,7 @@ private func fail(_ line: Int, _ message: String) -> ContentError {
 private struct GridDraft {
     var name: String?
     var rows: [[String]] = []
+    var rowLines: [Int] = []
     var rowLabels: [String]?
     var columnLabels: [String]?
     var highlighted: [(cell: GridCell, line: Int)] = []
@@ -284,8 +285,8 @@ private struct Builder {
 
     private func finish(_ grid: GridDraft) throws -> GridShape {
         guard let width = grid.rows.first?.count else { throw fail(currentLine, "grid has no rows (add `row [..]`)") }
-        for row in grid.rows where row.count != width {
-            throw fail(currentLine, "grid rows must all have \(width) cells")
+        for (row, line) in zip(grid.rows, grid.rowLines) where row.count != width {
+            throw fail(line, "grid rows must all have \(width) cells")
         }
         if let labels = grid.rowLabels, labels.count != grid.rows.count {
             throw fail(currentLine, "row-labels has \(labels.count) entries for \(grid.rows.count) rows")
@@ -494,7 +495,9 @@ private struct Builder {
         guard case .grid(var grid) = current else { throw noTarget(word, line: line) }
         let values = try list(rest, line: line)
         switch word {
-        case "row": grid.rows.append(values)
+        case "row":
+            grid.rows.append(values)
+            grid.rowLines.append(line)
         case "row-labels": grid.rowLabels = values
         default: grid.columnLabels = values
         }
