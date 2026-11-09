@@ -24,7 +24,7 @@ Code is split so that workstreams touch different files.
 CS/                      thin app target: entry point, tab view, wiring only
 Packages/CSKit/          local Swift package, one target per area
   Sources/
-    Content/             content models, YAML/Markdown loading, diagram block parser
+    Content/             content models, Markdown + frontmatter loading, step/block/tests parsers, diagram parser
     Runtime/             PythonRuntime actor, C bridge
     Editor/              STTextView wrapper, highlighting, keyboard bar
     Visuals/             shape views, step-through, animations
@@ -32,11 +32,13 @@ Packages/CSKit/          local Swift package, one target per area
     Exercises/           exercise UI, results
     Review/              FSRS, review queue
     Tutor/               Foundation Models features
+    Linux/               v86 web view host, JS bridge, Ghostty terminal, check agent
     Store/               SwiftData models
     Contracts/           shared types only: protocols, Codable structs, JSON schemas
 Resources/python/        app_support.py, viz.py, trace.py
+Resources/linux/         v86 build, VM image, saved states (built by tools/linux)
 content/                 lessons, exercises, cards
-tools/                   content validator, scripts
+tools/                   content validator, Linux image build, scripts
 ```
 
 Rules:
