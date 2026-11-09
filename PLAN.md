@@ -32,7 +32,6 @@ Rule: use the system's components and defaults before drawing anything custom. I
 - **Motion**: default SwiftUI springs. Visualizer uses `matchedGeometryEffect` for swaps.
 - **Feedback**: `.sensoryFeedback(.success/.error)` on test results. No custom toasts.
 - **Keyboard**: input accessory bar above the keyboard for `:`, `()`, `[]`, `{}`, indent, outdent, undo, run. Hardware keyboard shortcuts via `.keyboardShortcut` (⌘R run, ⌘. stop).
-- **Platform touches**: Spotlight indexing of lessons, App Intents ("Continue lesson"), a widget showing today's review count, Share sheet for code.
 - **Copy**: short sentence-case labels, no taglines or helper text. If a screen needs explanation, fix the layout.
 - **Reference apps**: Swift Playgrounds, Notes, Settings, Fitness. When unsure, do what they do.
 
