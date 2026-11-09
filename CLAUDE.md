@@ -27,6 +27,7 @@ Packages/CSKit/          local Swift package, one target per area
     Content/             content models, Markdown + frontmatter loading, step/block/tests parsers, diagram parser
     Runtime/             PythonRuntime actor, C bridge
     Editor/              STTextView wrapper, highlighting, keyboard bar
+    VisualsLayout/       Foundation-only layout: frames to cached positions, cell identity
     Visuals/             shape views, step-through, animations
     Lessons/             lesson reader, steps
     Exercises/           exercise UI, results
@@ -42,10 +43,13 @@ tools/                   content validator, Linux image build, scripts
 ```
 
 Rules:
-- Use Xcode synchronized folders for the app target, so adding files never edits `project.pbxproj`.
+- Use Xcode synchronized folders for the app target, so adding files never edits `project.pbxproj`. The project is generated from `project.yml` with XcodeGen and committed; edit `project.yml`, then run `xcodegen generate`.
+- UI targets wrap their sources in `#if canImport(UIKit)` so `swift test` builds the whole package on macOS and Linux.
+- JSON between Python and Swift uses camelCase keys, matching the Swift property names. `Shape` is flat with a `kind` field (see `Contracts/Shapes.swift`).
 - `Contracts` holds every type that crosses an area boundary (trace snapshot JSON, viz frame JSON, exercise result, content models). Areas depend on `Contracts`, not on each other, where possible.
 - Logic that doesn't need UIKit (content parsing, diagram parser, FSRS, trace models) stays Foundation-only so `swift test` runs on Linux.
 - Python support code is tested with plain `python3 -m pytest` on Linux.
+- Non-Swift contracts (the Python call API, recorded output files) are in `docs/contracts.md`.
 
 ## Using subagents
 
