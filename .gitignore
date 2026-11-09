@@ -10,3 +10,4 @@ __pycache__/
 Frameworks/
 Resources/python/lib/
 Resources/linux/build/
+.claude/worktrees/

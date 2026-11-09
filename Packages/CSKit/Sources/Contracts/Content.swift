@@ -6,16 +6,16 @@ import Foundation
 public struct Track: Codable, Sendable, Hashable, Identifiable {
     public var id: String
     public var title: String
-    public var units: [Unit]
+    public var units: [CourseUnit]
 
-    public init(id: String, title: String, units: [Unit]) {
+    public init(id: String, title: String, units: [CourseUnit]) {
         self.id = id
         self.title = title
         self.units = units
     }
 }
 
-public struct Unit: Codable, Sendable, Hashable, Identifiable {
+public struct CourseUnit: Codable, Sendable, Hashable, Identifiable {
     public var id: String
     public var title: String
     /// Unit ids this one builds on. Suggests order; nothing is locked.

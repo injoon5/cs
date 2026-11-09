@@ -18,15 +18,18 @@ Runtime calls these functions on its interpreter thread. Every function takes an
 | Function | Returns (JSON) |
 |---|---|
 | `app_support.run(code)` | `{"error": PythonError \| null}`. Output already streamed through `_csbridge`. |
-| `app_support.run_tests(code, test_lines_json, python_tests, timeout)` | `TestReport`. `test_lines_json` is a JSON list of `call == expected` lines; `python_tests` is assert source or `""`. |
+| `app_support.run_tests(code, test_lines_json, python_tests, timeout)` | `TestReport`. `test_lines_json` is a JSON list of `call == expected` lines; `python_tests` is assert source or `""`; `timeout` is seconds as a string (`float(timeout)`). |
 | `app_support.trace(code)` | `Trace` |
 | `app_support.visualize(code)` | `{"frames": [VizFrame], "output": str, "error": PythonError \| null}` |
 
 Rules:
+- `Resources/python` is copied to `CS.app/python`, next to the stdlib, and is on `sys.path`.
+- User code is compiled with the filename `main.py`; tracebacks show only `main.py` frames.
 - Each call runs user code in a fresh globals dict with `__name__ == "__main__"`, working directory set by Runtime to a scratch folder.
 - Line numbers in `PythonError.line`, `TraceStep.line` and `TraceFrame.line` are 1-based lines in the user's code. Tracebacks hide `app_support`, `trace`, `viz` frames.
 - Per-test timeout is enforced in Python: a `threading.Timer` raises `TimeoutError` in the run thread via `ctypes.pythonapi.PyThreadState_SetAsyncExc`. A timed-out test reports `error.type == "TimeoutError"`.
 - Stop comes from Swift: `PyThreadState_SetAsyncExc(run_thread, KeyboardInterrupt)`. `run` reports it as `error.type == "KeyboardInterrupt"`; Swift maps that to `RunOutcome.stopped`.
+- `visualize` returns `error` rather than a `RunResult`; Runtime builds `VizRun.result` from it.
 - `viz` is importable by user code (`import viz`). Its frames are `Shape` dicts with a `kind` field.
 - Trace limits: 1,000 steps (`truncated: true`), skip non-user frames, first 50 items per container (`omitted` counts the rest).
 

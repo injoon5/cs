@@ -38,7 +38,7 @@ private struct Loader {
     var tracks: [Track] = []
     var errors: [ContentError] = []
 
-    private var unitPaths: [(unit: Contracts.Unit, path: String, requiresLine: Int)] = []
+    private var unitPaths: [(unit: CourseUnit, path: String, requiresLine: Int)] = []
     private var seenUnitIDs: [String: String] = [:]
     private var seenExerciseIDs: [String: String] = [:]
     private let fileManager = FileManager.default
@@ -97,14 +97,14 @@ private struct Loader {
             }
         }
 
-        var units: [Contracts.Unit] = []
+        var units: [CourseUnit] = []
         for unitFolder in subfolders(of: dir) {
             if let unit = loadUnit(folder: "\(folder)/\(unitFolder)") { units.append(unit) }
         }
         return (Track(id: id, title: title, units: units), order, folder)
     }
 
-    private mutating func loadUnit(folder: String) -> Contracts.Unit? {
+    private mutating func loadUnit(folder: String) -> CourseUnit? {
         let unitPath = "\(folder)/unit.md"
         guard let source = read(unitPath) else {
             if !fileManager.fileExists(atPath: root.appendingPathComponent(unitPath).path) {
@@ -113,14 +113,14 @@ private struct Loader {
             return nil
         }
 
-        var unit: Contracts.Unit
+        var unit: CourseUnit
         var requiresLine = 1
         do {
             let lines = SourceLines.split(source)
             guard let (frontmatter, _) = try Frontmatter.extract(from: lines, path: unitPath) else {
                 throw ContentError(path: unitPath, line: 1, message: "unit.md needs frontmatter with `id` and `title`")
             }
-            unit = Contracts.Unit(
+            unit = CourseUnit(
                 id: try frontmatter.requiredString("id"),
                 title: try frontmatter.requiredString("title"),
                 requires: try frontmatter.strings("requires")

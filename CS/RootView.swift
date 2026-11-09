@@ -25,6 +25,9 @@ struct RootView: View {
         .task {
             // Start the interpreter early so the first run doesn't pay for it.
             await PythonRuntime.shared.start()
+            #if DEBUG
+            await PythonSelfCheck.runIfRequested()
+            #endif
         }
     }
 }
