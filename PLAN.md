@@ -45,7 +45,7 @@ Rule: use the system's components and defaults before drawing anything custom. I
 4. Progress: completed lessons and exercises per topic.
 
 ### v2
-5. Visualizer: step through an algorithm on arrays, trees and graphs. Python reports states, SwiftUI draws them (see below).
+5. Visuals: step-through execution, algorithm animations and inline lesson diagrams (see Visuals).
 6. Review: daily queue of recall cards and re-solves, scheduled with FSRS.
 7. On-device AI tutor (see below).
 8. Complexity check: run a solution on growing inputs, plot time vs n (Swift Charts).
@@ -73,7 +73,64 @@ CPython (embedded)
 - **Stop / infinite loops**: `PyThreadState_SetAsyncExc` raising `KeyboardInterrupt` on the run thread, plus a timeout per exercise test. Recursion limit kept at default.
 - **Input**: `input()` patched to request a line from the UI and block until answered.
 - **Tests**: exercises ship a test file; `app_support.run_tests(user_code, tests)` returns JSON (name, passed, input, expected, got, error, duration).
-- **Visualizer hook**: algorithms call `viz.array(a, highlight=[i, j])`, `viz.tree(root)`, `viz.graph(adj, visited=…)`. Each call appends a frame; Swift receives the frame list and animates between them. Explicit calls beat `sys.settrace` guessing.
+- **Visuals**: execution tracing and `viz` frames, see Visuals.
+
+## Visuals
+
+One diagram vocabulary, drawn natively in SwiftUI, used in three places. Same look in lessons, step-through and animations.
+
+### Shapes
+
+| Shape | Drawn as | Used for |
+|---|---|---|
+| Array | Row of cells, index labels, named pointers (`i`, `lo`, `hi`) above cells, ranges shaded | Two pointers, sliding window, sorting, binary search |
+| Grid | Table with row/col labels, filled cells, arrows to dependencies | DP tables, matrices, BFS on grids |
+| Linked list | Boxes with `next` arrows | Linked lists, reversal |
+| Tree | Layered layout, highlighted nodes/edges | BST, heaps, recursion trees, tries |
+| Graph | Nodes and edges, weights, visited/frontier colors | BFS, DFS, Dijkstra, MST |
+| Hash table | Buckets with chains | Hashing |
+| Stack / queue | Vertical stack, horizontal queue | Stacks, queues, call stack |
+| Call tree | Tree of calls with args and return values; repeated calls dimmed | Recursion, memoization |
+| Bits | Row of 0/1 cells, grouped by byte | Bit manipulation, number representation |
+| Plot | Swift Charts line chart | Big-O growth, measured runtimes |
+
+Layout: trees with a simple tidy-tree algorithm; graphs use positions from the content file or a circular/layered layout. No layout library.
+
+### 1. Step-through execution
+
+Run any code and step through it line by line, forward and back.
+
+- **Screen**: code on top with the current line highlighted, below it the frames (one card per function call, local variables) and the objects they point to, with arrows for references. Scrubber at the bottom with step back/forward and play.
+- **Shows**: aliasing (`b = a` → two arrows to one list), mutation, the call stack growing and shrinking in recursion, return values.
+- **How**: `sys.monitoring` (Python 3.12+, faster than `settrace`) records a snapshot per line in user code: frames, locals, and the reachable object graph by `id()`. Sent to Swift as JSON once the run ends.
+- **Shape detection**: lists draw as arrays, lists of lists as grids, dicts as tables, objects with `left`/`right` as trees, objects with `next` as linked lists.
+- **Limits**: stop at 1,000 steps, skip stdlib frames, show the first 50 items of a big container.
+
+### 2. Algorithm animations
+
+The `viz` module for hand-picked moments, where step-through is too low-level.
+
+- `viz.array(a, pointers={"i": i, "j": j}, range=(lo, hi))`, `viz.grid(dp, highlight=(r, c))`, `viz.tree(root, active=node)`, `viz.graph(adj, visited=seen, frontier=queue)`, `viz.note("swap")`.
+- Each call adds a frame; Swift animates between frames with `matchedGeometryEffect` (cells move when swapped, pointers slide).
+- Lessons ship animations as code, so they double as runnable examples.
+
+### 3. Lesson diagrams
+
+Small static diagrams inside lesson text, written as fenced blocks:
+
+````
+```diagram
+array [1, 3, 5, 7, 9, 11]
+pointer lo 0
+pointer mid 2
+pointer hi 5
+shade 3..5
+```
+````
+
+- Rendered by the same SwiftUI views, so they match the theme and dark mode.
+- Diffable text, no image files.
+- Tap a diagram to open it full screen; if it has a `code` field, run it into a step-through.
 
 ## Content
 
@@ -154,7 +211,7 @@ CS/
   Editor/         STTextView wrapper, Neon highlighting, keyboard accessory bar
   Runtime/        PythonRuntime actor, C bridge
   Exercises/      runner UI, results
-  Visualizer/     frame model, array/tree/graph views
+  Visuals/        shape views, diagram parser, step-through, animations
   Review/         FSRS scheduler, cards
   Store/          SwiftData models
 Resources/
@@ -180,7 +237,7 @@ Highlighting: STTextView-Plugin-Neon with tree-sitter-python. Map tree-sitter ca
 
 Apple frameworks, no dependency: SwiftData (+ CloudKit sync), Swift Charts (complexity plots), Foundation Models (on-device hints), App Intents, WidgetKit, Core Spotlight. Skip TipKit (it adds helper text).
 
-Keep the list this short. Visualizer, test runner and console are custom; no libraries for those.
+Keep the list this short. Visuals, test runner and console are custom; no libraries for those.
 
 ## On-device AI tutor (Foundation Models)
 
@@ -216,7 +273,7 @@ Design:
 3. **Lessons**: content loader, Markdown rendering, runnable cells. Write lessons 1–3.
 4. **Exercises**: YAML loader, test runner, results view. 5 exercises per lesson.
 5. **Progress**: SwiftData models, topic list with completion.
-6. **Visualizer**: `viz` module, array view with swaps and pointers, then trees and graphs.
+6. **Visuals**: array and grid views, lesson diagram blocks, step-through with frames and arrows, then `viz` animations, trees, graphs.
 7. **Review + complexity plots**.
 8. Remaining content, ongoing.
 
