@@ -12,7 +12,7 @@ Personal app. Read short lessons, run Python on device, solve exercises checked 
 | Python | Embedded CPython 3.14 (`Python.xcframework` from BeeWare Python-Apple-support) | Official iOS support since 3.13 (PEP 730). Real CPython, native speed, fully offline, full stdlib. |
 | Python, fallback | Pyodide in a hidden `WKWebView` | Only if embedding becomes painful. Slower startup, needs local asset serving, JS bridge. |
 | Lessons | Markdown files bundled in the app, rendered with Textual (successor to MarkdownUI) | Easy to write and diff. Code blocks become runnable cells. |
-| Linux | v86 (x86 emulator, compiles to WebAssembly) in a hidden `WKWebView`, booting a small Buildroot image; SwiftTerm for the terminal | A real kernel, so `/proc`, signals and permissions all behave correctly. WebKit's JIT runs it fast, which native interpreters can't do on iOS. Saved VM state starts in under a second. See Linux track. |
+| Linux | v86 (x86 emulator, compiles to WebAssembly) in a hidden `WKWebView`, booting a small Buildroot image; Ghostty's terminal via libghostty-spm | A real kernel, so `/proc`, signals and permissions all behave correctly. WebKit's JIT runs it fast, which native interpreters can't do on iOS. Saved VM state starts in under a second. See Linux track. |
 | Storage | SwiftData | Progress, saved code, review schedule. |
 | Minimum iOS | 26 | Personal device only, so use the latest APIs. |
 | Distribution | Xcode to own phone | Free Apple ID: re-sign every 7 days. Paid developer account: 1 year, plus TestFlight. App Store rules don't matter here. |
@@ -365,7 +365,16 @@ Teach the shell and how Linux works on a real kernel, not a fake shell.
 - v86 (BSD-2) in a hidden `WKWebView`, with all assets bundled locally. v86 compiles x86 to WebAssembly, and WebKit's JIT is available to any app, so it is much faster than a native interpreter (iOS doesn't let native apps JIT).
 - Image: 32-bit Buildroot with BusyBox plus bash, coreutils, grep, sed, gawk, findutils, less, vi, man pages, git and python3. 64 MB RAM, no network. `tools/linux/` builds the image on Linux in CI.
 - Instant start: the app ships a saved VM state taken after boot and restores it. Reset restores it again. Each lesson can ship its own state (files already in place).
-- Terminal: SwiftTerm (native, MIT) talks to the guest's serial console through a `WKScriptMessageHandler`. Native text, selection, Dynamic Type and a keyboard bar (Tab, Ctrl, Esc, arrows, `|`, `~`, `/`).
+- Terminal: Ghostty's terminal through libghostty-spm (`GhosttyTerminal`, MIT). Its host-managed I/O backend (`InMemoryTerminalSession`) takes bytes from any source with no pty, so the guest's serial console connects through a `WKScriptMessageHandler`. Metal rendering, touch selection and a SwiftUI view are included. We add a keyboard bar (Tab, Ctrl, Esc, arrows, `|`, `~`, `/`).
+- Pin an exact version (the package releases weekly). Check VoiceOver and the app size increase in the Linux spike. If either fails, fall back to SwiftTerm.
+
+**Terminal options**
+| Option | Verdict |
+|---|---|
+| libghostty-spm | Use. Full Ghostty renderer as a prebuilt XCFramework (no Zig needed), host-managed I/O, iOS touch selection, most mature (~120 stars, weekly releases). |
+| Termini | Rejected for now. A cleaner SwiftUI API (`processRemoteOutput`, `onTransportWrite`), but young (~20 stars, 0.x) and focused on SSH on iOS. Revisit if it matures. |
+| libghostty-vt alone | Later option. Stable C ABI (1.0), parser and screen state only, so we would draw cells ourselves in SwiftUI. Only worth it if the full renderer fails on size or accessibility. |
+| SwiftTerm | Fallback. Mature, pure Swift. Weaker escape-sequence coverage and rendering than Ghostty. |
 - Checks: a small agent on a second serial port runs `shell check` scripts and returns the exit code and output, so they never appear in the user's terminal.
 - Lifetime: one VM, created when a Linux lesson opens. Its state is saved when the app goes to the background and freed under memory pressure.
 
@@ -398,7 +407,7 @@ Highlighting: STTextView-Plugin-Neon with tree-sitter-python. Map tree-sitter ca
 | Lesson Markdown | Textual | MIT |
 | Frontmatter | Yams (YAML) | MIT |
 | Linux machine | v86 (in `WKWebView`) | BSD-2 |
-| Terminal | SwiftTerm | MIT |
+| Terminal | libghostty-spm (`GhosttyTerminal`, pinned) | MIT |
 | Spaced repetition | open-spaced-repetition/swift-fsrs (FSRS-5; last push Dec 2024) or port FSRS-6, ~200 lines | MIT |
 
 Apple frameworks, no dependency: SwiftData (+ CloudKit sync), Swift Charts (complexity plots), Foundation Models (on-device hints), App Intents, WidgetKit, Core Spotlight. Skip TipKit (it adds helper text).
@@ -441,7 +450,7 @@ Design:
 5. **Progress**: SwiftData models, topic list with completion.
 6. **Visuals**: inline trace first, then array and grid views, lesson diagram blocks, full step-through with frames and arrows, then `viz` animations, trees, graphs.
 7. **Review + complexity plots**.
-8. **Linux spike**: v86 + saved state + SwiftTerm on device. Measure cold start, typing latency and memory. If it fails, try TinyEMU.
+8. **Linux spike**: v86 + saved state + libghostty-spm on device. Measure cold start, typing latency, memory, app size and VoiceOver. If v86 fails, try TinyEMU; if the terminal fails, try SwiftTerm.
 9. **Linux track**: image build in CI, check agent, units 1–4.
 10. Remaining content, ongoing.
 

@@ -32,7 +32,7 @@ Packages/CSKit/          local Swift package, one target per area
     Exercises/           exercise UI, results
     Review/              FSRS, review queue
     Tutor/               Foundation Models features
-    Linux/               v86 web view host, SwiftTerm terminal, check agent bridge
+    Linux/               v86 web view host, Ghostty terminal, check agent bridge
     Store/               SwiftData models
     Contracts/           shared types only: protocols, Codable structs, JSON schemas
 Resources/python/        app_support.py, viz.py, trace.py
