@@ -12,7 +12,7 @@ Personal app. Read short lessons, run Python on device, solve exercises checked 
 | Python | Embedded CPython 3.14 (`Python.xcframework` from BeeWare Python-Apple-support) | Official iOS support since 3.13 (PEP 730). Real CPython, native speed, fully offline, full stdlib. |
 | Python, fallback | Pyodide in a hidden `WKWebView` | Only if embedding becomes painful. Slower startup, needs local asset serving, JS bridge. |
 | Lessons | Markdown files bundled in the app, rendered with Textual (successor to MarkdownUI) | Easy to write and diff. Code blocks become runnable cells. |
-| Linux | TinyEMU (RISC-V system emulator, C) in-process, booting a small Buildroot image; Ghostty's terminal via libghostty-spm | A real kernel, so `/proc`, signals and permissions all behave correctly. Native, no web view, small enough to own. v86 is the fallback. See Linux track. |
+| Linux | v86 (x86 emulator, compiles to WebAssembly) in a hidden `WKWebView`, booting a small Buildroot image; Ghostty's terminal via libghostty-spm | A real kernel, so `/proc`, signals and permissions all behave correctly. WebKit's JIT runs it fast, and saved VM state starts in under a second. TinyEMU is the fallback. See Linux track. |
 | Storage | SwiftData | Progress, saved code, review schedule. |
 | Minimum iOS | 26 | Personal device only, so use the latest APIs. |
 | Distribution | Xcode to own phone | Free Apple ID: re-sign every 7 days. Paid developer account: 1 year, plus TestFlight. App Store rules don't matter here. |
@@ -362,13 +362,13 @@ Predict before run, and trace before implement: reading and predicting code buil
 Teach the shell and how Linux works on a real kernel, not a fake shell.
 
 **Machine**
-- TinyEMU (Fabrice Bellard, MIT) compiled into the app as a C target in `CSKit`. It emulates a 64-bit RISC-V machine with VirtIO console, block, 9P and input devices. No web view and no JIT.
-- Image: Buildroot for RISC-V 64 with OpenSBI, a current LTS kernel, BusyBox plus bash, coreutils, grep, sed, gawk, findutils, less, vi, man pages, git and python3. 128 MB RAM, no network. `tools/linux/` builds the image on Linux in CI. The 2018 images from bellard.org (Linux 4.15) are only for the spike.
-- Instant start: we add VM state save/restore to TinyEMU (CPU, RAM compressed with zstd/LZFSE, CLINT/PLIC, VirtIO queues). The core is ~11k lines, so this is a contained change. The app ships a state taken after boot. Reset restores it, and each lesson can ship its own state with files already in place. Until save/restore works, boot in the background when a Linux unit opens.
-- Files: the user's home is a 9P mount backed by a folder in app storage, so work survives resets and app updates and can be read from Swift.
-- Checks: a small agent on a second VirtIO console runs `shell check` scripts and returns the exit code and output, so they never appear in the user's terminal. CI runs the same emulator natively on Linux to check every `shell solution`.
-- Lifetime: one VM on a background thread, started when a Linux lesson opens. Its state is saved when the app goes to the background.
-- Later: the same emulated CPU can teach assembly. RISC-V is the clean teaching ISA, and we own the interpreter, so registers and memory can feed the step-through views.
+- v86 (BSD-2) in a hidden `WKWebView`, with all assets bundled and served locally. v86 translates hot x86 code to WebAssembly, and WebKit's JIT is available to any app, so it runs faster than a native interpreter (iOS doesn't let native apps JIT).
+- Image: 32-bit Buildroot with BusyBox plus bash, coreutils, grep, sed, gawk, findutils, less, vi, man pages, git and python3. 128 MB RAM, no network. `tools/linux/` builds the image on Linux in CI.
+- Instant start: the app ships a saved VM state (`save_state`, zstd) taken after boot and restores it. Reset restores it again, and each lesson can ship its own state with files already in place.
+- Files: the user's home is a 9P mount whose handler (`handle9p`) is backed by a folder in app storage through the JS bridge, so work survives resets and app updates and can be read from Swift. 9P handlers aren't covered by save states, so remount after each restore.
+- Bridge: `WKScriptMessageHandler` for guest → Swift bytes, `evaluateJavaScript` for Swift → guest. Batch output per animation frame rather than per byte.
+- Checks: a small agent on a second serial port runs `shell check` scripts and returns the exit code and output, so they never appear in the user's terminal. CI runs the same build in Node to check every `shell solution`.
+- Lifetime: one web view, created when a Linux lesson opens. State is saved when the app goes to the background. If WebKit kills the WebContent process, restore the last state and remount.
 
 **Emulator comparison**
 
@@ -385,9 +385,9 @@ Teach the shell and how Linux works on a real kernel, not a fake shell.
 | Integration | Swift ↔ C directly. Runs in-process on a thread; `swift test` can boot it on Linux | JS bridge through `WKScriptMessageHandler`. Assets served locally. WebContent process can be killed under memory pressure |
 | Images | Must build our own current kernel + OpenSBI (shipped images are from 2018) | Buildroot, Alpine x86, Arch 32 images available |
 
-**Choice: TinyEMU.** A shell is light work, so raw speed matters less than how it fits the app: native, in-process, no web view, debuggable, testable on Linux, small enough to own. Its weak spots (no save state, old images) are things we can fix ourselves. v86's advantages (JIT, save state built in) don't outweigh a web view and a JS bridge for this.
+**Choice: v86.** Save state, ready-made images and a JIT that works on iOS are already there and maintained. TinyEMU fits the app more neatly (native, in-process), but needs a save-state patch, a current kernel port and an unmaintained fork we'd own.
 
-**Switch to v86 if the spike shows**: boot to prompt over 5 s without save state, a shell command taking noticeably long (`grep -r` over the man pages, `git log` on a small repo, `python3 -c 'print(1)'` over 1 s), or kernel and OpenSBI compatibility costing more than a few days.
+**Switch to TinyEMU if the spike shows**: WebContent process kills that restore can't hide, bridge latency you can feel while typing, or memory use that gets the app killed.
 
 **Other options**
 | Option | Verdict |
@@ -397,7 +397,7 @@ Teach the shell and how Linux works on a real kernel, not a fake shell.
 | Simulated shell | Rejected. Teaches the simulator, not Linux. |
 
 **Terminal**
-- Ghostty's terminal through libghostty-spm (`GhosttyTerminal`, MIT). Its host-managed I/O backend (`InMemoryTerminalSession`) takes bytes from any source with no pty, so the guest's VirtIO console connects straight to it from Swift. Metal rendering, touch selection and a SwiftUI view are included. We add a keyboard bar (Tab, Ctrl, Esc, arrows, `|`, `~`, `/`).
+- Ghostty's terminal through libghostty-spm (`GhosttyTerminal`, MIT). Its host-managed I/O backend (`InMemoryTerminalSession`) takes bytes from any source with no pty, so the guest's serial console connects to it through the JS bridge. Metal rendering, touch selection and a SwiftUI view are included. We add a keyboard bar (Tab, Ctrl, Esc, arrows, `|`, `~`, `/`).
 - Pin an exact version (the package releases weekly). Check VoiceOver and the app size increase in the Linux spike. If either fails, fall back to SwiftTerm.
 
 | Option | Verdict |
@@ -427,7 +427,7 @@ Highlighting: STTextView-Plugin-Neon with tree-sitter-python. Map tree-sitter ca
 | Bracket pairing, auto-indent | STTextView-Plugin-TextFormation (TextFormation) | MIT / BSD-3 |
 | Lesson Markdown | Textual | MIT |
 | Frontmatter | Yams (YAML) | MIT |
-| Linux machine | TinyEMU (vendored, with our save/restore patch) | MIT |
+| Linux machine | v86 (in `WKWebView`) | BSD-2 |
 | Terminal | libghostty-spm (`GhosttyTerminal`, pinned) | MIT |
 | Spaced repetition | open-spaced-repetition/swift-fsrs (FSRS-5; last push Dec 2024) or port FSRS-6, ~200 lines | MIT |
 
@@ -471,7 +471,7 @@ Design:
 5. **Progress**: SwiftData models, topic list with completion.
 6. **Visuals**: inline trace first, then array and grid views, lesson diagram blocks, full step-through with frames and arrows, then `viz` animations, trees, graphs.
 7. **Review + complexity plots**.
-8. **Linux spike**: TinyEMU with bellard.org's 2018 image + libghostty-spm on device. Measure boot time, the commands listed under Choice, typing latency, memory, app size and VoiceOver. Then build a current kernel and add save/restore. Switch criteria are in the Linux track.
+8. **Linux spike**: v86 + saved state + libghostty-spm on device. Measure restore time, typing latency, `grep -r` over the man pages, `git log`, `python3 -c 'print(1)'`, memory, app size and VoiceOver. Switch criteria are in the Linux track.
 9. **Linux track**: image build in CI, check agent, 9P home, units 1–4.
 10. Remaining content, ongoing.
 
@@ -480,7 +480,7 @@ Design:
 - Embedding friction (signing `.so` extension modules, build phase script). Mitigation: follow the CPython iOS guide exactly; milestone 1 is a spike.
 - App size: stdlib is tens of MB. Fine for personal use; strip `test/`, `idlelib/`, `tkinter/`.
 - Killing runaway C-level loops: async exceptions only fire between bytecodes. Acceptable for learning code.
-- TinyEMU is unmaintained upstream since 2019; we own our fork. Current kernels on its machine model may need small fixes (device tree, SBI). The 128 MB guest RAM counts against the app's memory; free it when leaving the Linux track.
+- Linux in `WKWebView`: the WebContent process can be killed under memory pressure. Mitigation: save state on background, restore and remount on return; free the web view when leaving the Linux track.
 - Content is the real work. Budget more time for lessons than for code.
 
 ## Development note
