@@ -203,23 +203,7 @@ Predict before run, and trace before implement: reading and predicting code buil
 
 ## Project layout
 
-```
-CS.xcodeproj
-CS/
-  App/            entry, navigation
-  Lessons/        reader, Markdown + runnable cells
-  Editor/         STTextView wrapper, Neon highlighting, keyboard accessory bar
-  Runtime/        PythonRuntime actor, C bridge
-  Exercises/      runner UI, results
-  Visuals/        shape views, diagram parser, step-through, animations
-  Review/         FSRS scheduler, cards
-  Store/          SwiftData models
-Resources/
-  python/         stdlib + app_support.py
-  content/        lessons
-Frameworks/
-  Python.xcframework
-```
+See `CLAUDE.md` (Architecture for parallel work). The app target is thin; areas live as targets in a local `CSKit` Swift package, with shared types in `Contracts`.
 
 Highlighting: STTextView-Plugin-Neon with tree-sitter-python. Map tree-sitter capture names to Xcode's default theme colors.
 
