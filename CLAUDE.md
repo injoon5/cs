@@ -31,11 +31,13 @@ Packages/CSKit/          local Swift package, one target per area
     Visuals/             shape views, step-through, animations
     Lessons/             lesson reader, steps
     Exercises/           exercise UI, results
+    Playground/          playground screen: editor, console, saved files
     Review/              FSRS, review queue
     Tutor/               Foundation Models features
     Linux/               v86 web view host, JS bridge, Ghostty terminal, check agent
     Store/               SwiftData models
     Contracts/           shared types only: protocols, Codable structs, JSON schemas
+    ContentTool/         `cs-content` executable: dumps loaded content as JSON for tools/
 Resources/python/        app_support.py, viz.py, trace.py
 Resources/linux/         v86 build, VM image, saved states (built by tools/linux)
 content/                 lessons, exercises, cards
@@ -46,7 +48,8 @@ Rules:
 - Use Xcode synchronized folders for the app target, so adding files never edits `project.pbxproj`. The project is generated from `project.yml` with XcodeGen and committed; edit `project.yml`, then run `xcodegen generate`.
 - UI targets wrap their sources in `#if canImport(UIKit)` so `swift test` builds the whole package on macOS and Linux.
 - JSON between Python and Swift uses camelCase keys, matching the Swift property names. `Shape` is flat with a `kind` field (see `Contracts/Shapes.swift`).
-- `Contracts` holds every type that crosses an area boundary (trace snapshot JSON, viz frame JSON, exercise result, content models). Areas depend on `Contracts`, not on each other, where possible.
+- `Contracts` holds every type that crosses an area boundary (trace snapshot JSON, viz frame JSON, exercise result, content models). Areas depend on `Contracts`, not on each other, where possible. Exceptions: screen areas (Lessons, Exercises, Playground) may use the component areas Editor and Visuals through their public views, and Lessons embeds Exercises.
+- Third-party UI libraries are iOS-only dependencies (`condition: .when(platforms: [.iOS])`), so `swift test` never builds them.
 - Logic that doesn't need UIKit (content parsing, diagram parser, FSRS, trace models) stays Foundation-only so `swift test` runs on Linux.
 - Python support code is tested with plain `python3 -m pytest` on Linux.
 - Non-Swift contracts (the Python call API, recorded output files) are in `docs/contracts.md`.
