@@ -6,7 +6,7 @@ Personal app. Read short lessons, run Python on device, solve exercises checked 
 
 | Area | Choice | Why |
 |---|---|---|
-| UI | SwiftUI, with UIKit where it matters | SwiftUI is faster to build lists, navigation, lesson pages and animated visualizations. UIKit only for the code editor, wrapped in `UIViewRepresentable`. |
+| UI | SwiftUI shell, UIKit for keyboard-heavy screens | SwiftUI is faster to build lists, navigation, lesson pages and animated visualizations. UIKit owns the screens built around a text view and the keyboard (Playground, exercise editor, Linux terminal), each a `UIViewController` wrapped once in `UIViewControllerRepresentable`. |
 | Editor | STTextView (`STTextViewUIKit`, TextKit 2) by Marcin Krzyżanowski | TextKit 2 native, gutter with line numbers, current-line highlight, plugin API. Check its license terms (has a commercial option). |
 | Highlighting | STTextView-Plugin-Neon (Neon + SwiftTreeSitter + tree-sitter-python) | Incremental, accurate Python highlighting. Same author's plugin. |
 | Python | Embedded CPython 3.14 (`Python.xcframework` from BeeWare Python-Apple-support) | Official iOS support since 3.13 (PEP 730). Real CPython, native speed, fully offline, full stdlib. |
@@ -18,13 +18,20 @@ Personal app. Read short lessons, run Python on device, solve exercises checked 
 | Distribution | Xcode to own phone | Free Apple ID: re-sign every 7 days. Paid developer account: 1 year, plus TestFlight. App Store rules don't matter here. |
 
 ### Why not all UIKit
-UIKit gives more control but much more code for the parts that are mostly layout. The only place SwiftUI is weak for this app is text editing, so UIKit goes there and nowhere else.
+UIKit gives more control but much more code for the parts that are mostly layout. This app uses system navigation, sheets and short lists, and its visuals depend on SwiftUI springs and stable identity, so a UIKit-first app would cost more code for no gain.
+
+Where SwiftUI is weak here is text editing with the keyboard up. So the boundary is the screen, not the view:
+
+- **Editor screens** (Playground, exercise editor): editor, console and keyboard bar in one `UIViewController`, laid out with `keyboardLayoutGuide`. SwiftUI never does keyboard avoidance for them.
+- **Linux terminal**: same pattern, terminal view and keyboard bar in one view controller.
+- **Lesson reader**: SwiftUI first. If profiling shows hitches or size jumps from the embedded runnable cells, move it to a `UICollectionView` with `UIHostingConfiguration` cells.
+- **Models**: `@Observable` everywhere. UIKit views update from them through iOS 26 observation tracking (`updateProperties`, `layoutSubviews`), so both sides share the same models.
 
 ## Design: feels like Apple made it
 
 Rule: use the system's components and defaults before drawing anything custom. If Apple has a control for it, use that control.
 
-- **Structure**: `TabView` (Learn, Practice, Playground, Review) with the iOS 26 Liquid Glass tab bar. `NavigationStack` with large titles. Sheets with detents for hints, results and settings.
+- **Structure**: `TabView` (Learn, Practice, Playground, Review) with the iOS 26 Liquid Glass tab bar. `NavigationStack` with large titles, driven by an `@Observable` router per tab that owns the path; views push route values, not destination views. Sheets with detents for hints, results and settings.
 - **Materials**: Liquid Glass comes free with system bars, toolbars and sheets. Use `.glassEffect()` only on floating controls (Run button, visualizer playback bar). No custom gradients, shadows or cards.
 - **Type**: SF Pro via system text styles (`.title`, `.body`, `.footnote`). SF Mono for code and console. No hard-coded sizes.
 - **Color**: semantic colors only (`.primary`, `.secondary`, `Color(.systemBackground)`, grouped backgrounds). One accent color. Light and dark from day one. Editor theme follows Xcode's default light/dark.
@@ -397,7 +404,7 @@ Teach the shell and how Linux works on a real kernel, not a fake shell.
 | Simulated shell | Rejected. Teaches the simulator, not Linux. |
 
 **Terminal**
-- Ghostty's terminal through libghostty-spm (`GhosttyTerminal`, MIT). Its host-managed I/O backend (`InMemoryTerminalSession`) takes bytes from any source with no pty, so the guest's serial console connects to it through the JS bridge. Metal rendering, touch selection and a SwiftUI view are included. We add a keyboard bar (Tab, Ctrl, Esc, arrows, `|`, `~`, `/`).
+- Ghostty's terminal through libghostty-spm (`GhosttyTerminal`, MIT). Its host-managed I/O backend (`InMemoryTerminalSession`) takes bytes from any source with no pty, so the guest's serial console connects to it through the JS bridge. Metal rendering and touch selection are included. We host it in a view controller (see Why not all UIKit) and add a keyboard bar (Tab, Ctrl, Esc, arrows, `|`, `~`, `/`).
 - Pin an exact version (the package releases weekly). Check VoiceOver and the app size increase in the Linux spike. If either fails, fall back to SwiftTerm.
 
 | Option | Verdict |
@@ -481,6 +488,7 @@ Design:
 - App size: stdlib is tens of MB. Fine for personal use; strip `test/`, `idlelib/`, `tkinter/`.
 - Killing runaway C-level loops: async exceptions only fire between bytecodes. Acceptable for learning code.
 - Linux in `WKWebView`: the WebContent process can be killed under memory pressure. Mitigation: save state on background, restore and remount on return; free the web view when leaving the Linux track.
+- Lesson reader performance: many TextKit cells inside a SwiftUI scroll view may hitch or jump in size. Mitigation: profile at milestone 3; fall back to `UICollectionView` (see Why not all UIKit).
 - Content is the real work. Budget more time for lessons than for code.
 
 ## Development note

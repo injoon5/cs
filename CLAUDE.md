@@ -26,7 +26,7 @@ Packages/CSKit/          local Swift package, one target per area
   Sources/
     Content/             content models, Markdown + frontmatter loading, step/block/tests parsers, diagram parser
     Runtime/             PythonRuntime actor, C bridge
-    Editor/              STTextView wrapper, highlighting, keyboard bar
+    Editor/              STTextView wrapper, editor view controller, highlighting, keyboard bar
     Visuals/             shape views, step-through, animations
     Lessons/             lesson reader, steps
     Exercises/           exercise UI, results
