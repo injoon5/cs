@@ -123,7 +123,7 @@ enum GridLayout {
     /// Arrows between cell centers, starting and ending partway inside each cell so they clear
     /// the value text and stay visible between neighbors.
     static func dependencyEndpoints(_ a: LayoutPoint, _ b: LayoutPoint, cellSize: LayoutSize) -> (LayoutPoint, LayoutPoint) {
-        let inset = 0.65
+        let inset = 0.8
         let start = EdgeClipping.rect(from: a, toward: b, halfWidth: cellSize.width / 2 * inset, halfHeight: cellSize.height / 2 * inset)
         let end = EdgeClipping.rect(from: b, toward: a, halfWidth: cellSize.width / 2 * inset, halfHeight: cellSize.height / 2 * inset)
         return (start, end)
