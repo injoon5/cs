@@ -29,7 +29,7 @@ Rule: use the system's components and defaults before drawing anything custom. I
 - **Color**: semantic colors only (`.primary`, `.secondary`, `Color(.systemBackground)`, grouped backgrounds). One accent color. Light and dark from day one. Editor theme follows Xcode's default light/dark.
 - **Icons**: SF Symbols, with symbol effects (`.bounce` on pass, `.replace` on Run/Stop).
 - **Lists**: `List` with `.insetGrouped` for topics and settings. Swipe actions, context menus, `ContentUnavailableView` for empty states.
-- **Motion**: default SwiftUI springs. Visualizer uses `matchedGeometryEffect` for swaps.
+- **Motion**: default SwiftUI springs. Visualizer animates by stable identity and explicit positions (see Visuals, Rendering and performance).
 - **Feedback**: `.sensoryFeedback(.success/.error)` on test results. No custom toasts.
 - **Keyboard**: input accessory bar above the keyboard for `:`, `()`, `[]`, `{}`, indent, outdent, undo, run. Hardware keyboard shortcuts via `.keyboardShortcut` (⌘R run, ⌘. stop).
 - **Copy**: short sentence-case labels, no taglines or helper text. If a screen needs explanation, fix the layout.
@@ -110,7 +110,7 @@ Run any code and step through it line by line, forward and back.
 The `viz` module for hand-picked moments, where step-through is too low-level.
 
 - `viz.array(a, pointers={"i": i, "j": j}, range=(lo, hi))`, `viz.grid(dp, highlight=(r, c))`, `viz.tree(root, active=node)`, `viz.graph(adj, visited=seen, frontier=queue)`, `viz.note("swap")`.
-- Each call adds a frame; Swift animates between frames with `matchedGeometryEffect` (cells move when swapped, pointers slide).
+- Each call adds a frame; Swift animates between frames by element identity (cells move when swapped, pointers slide).
 - Lessons ship animations as code, so they double as runnable examples.
 
 ### 3. Lesson diagrams
@@ -130,6 +130,33 @@ shade 3..5
 - Rendered by the same SwiftUI views, so they match the theme and dark mode.
 - Diffable text, no image files.
 - Tap a diagram to open it full screen; if it has a `code` field, run it into a step-through.
+
+### Rendering and performance
+
+Target: no hitches at 120 Hz on the oldest supported iPhone, while playing or scrubbing the worst case (1,000 steps, 50-cell array, 63-node tree, 30-node graph, 20×20 grid).
+
+Drawn in plain SwiftUI. Scenes are small (under ~500 primitives, capped by the step-through limits), so Metal adds cost without benefit.
+
+| Option | Verdict |
+|---|---|
+| SwiftUI views | Use for anything that moves or is tapped: cells, nodes, pointers, frames. Free springs, Dynamic Type, VoiceOver, dark mode. |
+| `Canvas` | Use for dense static layers: grid cells, bit rows, background lanes. Text via `context.resolve`. Not animatable per element and no per-element accessibility, so never for moving parts. |
+| `Shape` with `animatableData` | Use for edges and arrows, so endpoints follow nodes during a spring. |
+| Swift Charts | Plot shape only. |
+| Metal / SpriteKit | Rejected. Own render loop, no system text or accessibility; SpriteKit inside SwiftUI has reported iOS 26 frame drops. Reconsider only if Instruments shows a case Canvas can't hit. |
+| Grape (force-directed graphs) | Rejected. Force layouts shift between frames; step-through needs nodes to stay put. |
+
+Rules:
+- **Layout is data.** A Foundation-only layout step turns each frame into positions and sizes (tidy tree, layered/circular graph, array cells). It runs off the main actor once per run, and every frame's layout is cached. Scrubbing is an array lookup, never a relayout. Unit-tested on Linux.
+- **Views place, they don't measure.** `.position`/`.offset` from the cached layout. No `GeometryReader`, anchor preferences or `onGeometryChange` inside diagrams; arrows read the same cached points.
+- **Stable identity.** `ForEach` keyed by element id, so a swap is two position changes under one spring. Traced objects use Python `id()` (the tracer holds references so ids aren't reused mid-run). Array cells get ids by matching equal values between consecutive frames, nearest index first, in the layout step; index-based ids would turn a swap into two value changes. `matchedGeometryEffect` only when an element moves between containers (e.g. array to stack).
+- **No identity flips.** State changes (highlight, visited, dimmed) are modifiers on the same view, not `if/else` branches. No `AnyView`.
+- **Narrow inputs.** Leaf views take small `Equatable` values (cell value, role, position), not the model. The `@Observable` player exposes `currentIndex`; only the diagram root reads it.
+- **Fixed geometry.** Cell size depends on the widest value in the whole run, not the current frame, so nothing reflows mid-animation. `.monospacedDigit()` on values and indices.
+- **Scrubbing vs. playing.** Dragging the scrubber updates without animation; step, play and release use a spring. Springs are interruptible, so fast taps never queue.
+- **Reduce Motion.** Moves become crossfades.
+- **Lessons.** Diagrams inside lesson text are static, laid out once and cached by block hash.
+- **Measure, don't guess.** A debug-only benchmark screen loads the worst-case fixtures above. Profile with the Instruments SwiftUI template (Xcode 26) on device: no long view-body updates, no hitches. Try `drawingGroup()` only where a measurement shows it helps.
 
 ## Content
 
@@ -220,7 +247,7 @@ Highlighting: STTextView-Plugin-Neon with tree-sitter-python. Map tree-sitter ca
 
 Apple frameworks, no dependency: SwiftData (+ CloudKit sync), Swift Charts (complexity plots), Foundation Models (on-device hints), App Intents, WidgetKit, Core Spotlight. Skip TipKit (it adds helper text).
 
-Keep the list this short. Visuals, test runner and console are custom; no libraries for those.
+Keep the list this short. Visuals, test runner and console are custom; no libraries for those (graph and Metal options checked, see Rendering and performance).
 
 ## On-device AI tutor (Foundation Models)
 
