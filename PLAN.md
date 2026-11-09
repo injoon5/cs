@@ -46,8 +46,9 @@ Rule: use the system's components and defaults before drawing anything custom. I
 
 ### v2
 5. Visualizer: step through an algorithm on arrays, trees and graphs. Python reports states, SwiftUI draws them (see below).
-6. Review: short recall cards per lesson, scheduled with FSRS.
-7. Complexity check: run a solution on growing inputs, plot time vs n (Swift Charts).
+6. Review: daily queue of recall cards and re-solves, scheduled with FSRS.
+7. Hints from the on-device model.
+8. Complexity check: run a solution on growing inputs, plot time vs n (Swift Charts).
 
 ### Later
 - Bundle `numpy`-free pure-Python helpers only; skip binary wheels unless needed.
@@ -108,6 +109,41 @@ Curriculum (first pass):
 
 Write lessons in my own words (draft with Claude, then edit). Don't copy textbook text.
 
+## How the curriculum works
+
+**Structure**: Track → Unit → Lesson → Step.
+- Tracks: Algorithms, CS foundations.
+- Unit: one topic from the list above, with `requires: [unit ids]`. Prerequisites suggest the next unit; nothing is locked.
+- Lesson: 5–10 minutes, one idea.
+- Step: the smallest thing on screen. A lesson is a sequence of steps.
+
+**Step types**
+
+| Step | What happens | Checked by |
+|---|---|---|
+| Read | Short prose, runnable code cell | — |
+| Predict | "What does this print?" Answer, then run to see | String match |
+| Trace | Step through the visualizer, answer "what's in the array after step 3?" | Value match |
+| Arrange | Reorder shuffled lines into a working function (Parsons problem) | Tests |
+| Implement | Write the function from starter code | Hidden tests, edge cases |
+| Analyze | Pick the time/space complexity | Choice |
+
+Predict before run, and trace before implement: reading and predicting code builds the model that writing code needs.
+
+**Exercises per unit**: warm-up → core → stretch. Hints unlock one at a time (nudge, approach, near-solution), then the solution. Seeing the solution marks the exercise for re-solve later.
+
+**Progress per unit**: New → Learning (lessons started) → Practiced (core exercises pass) → Mastered (review cards stable over weeks per FSRS).
+
+**Review**: one daily queue, mixing
+- recall cards (concepts, complexities, invariants)
+- re-solving an old exercise from a blank editor
+- interleaved problems that don't say which technique to use.
+
+**Content rules**
+- Stable slug ids for units, lessons, exercises and cards, so edits never reset progress.
+- Every exercise has a reference solution. CI in this repo runs every solution against its tests with CPython 3.14 on Linux, so broken content never reaches the app.
+- Content is versioned with the app; no download server.
+
 ## Project layout
 
 ```
@@ -129,6 +165,33 @@ Frameworks/
 ```
 
 Highlighting: STTextView-Plugin-Neon with tree-sitter-python. Map tree-sitter capture names to Xcode's default theme colors.
+
+## Libraries
+
+| Need | Library | License |
+|---|---|---|
+| Python runtime | `Python.xcframework` (BeeWare Python-Apple-support, 3.14) | PSF |
+| Editor | STTextView (`STTextViewUIKit`) | GPLv3 or commercial |
+| Highlighting | STTextView-Plugin-Neon → Neon, SwiftTreeSitter, tree-sitter-python | MIT / BSD-3 / MIT |
+| Bracket pairing, auto-indent | STTextView-Plugin-TextFormation (TextFormation) | MIT / BSD-3 |
+| Lesson Markdown | Textual | MIT |
+| Content files | Yams (YAML) | MIT |
+| Spaced repetition | open-spaced-repetition/swift-fsrs (FSRS-5; last push Dec 2024) or port FSRS-6, ~200 lines | MIT |
+
+Apple frameworks, no dependency: SwiftData (+ CloudKit sync), Swift Charts (complexity plots), Foundation Models (on-device hints), App Intents, WidgetKit, Core Spotlight. Skip TipKit (it adds helper text).
+
+Keep the list this short. Visualizer, test runner and console are custom; no libraries for those.
+
+## Other things to decide
+
+- **On-device hints**: Foundation Models (Apple's on-device model, iOS 26, Apple Intelligence devices). Explain a failing test, give a nudge without the answer. Offline, free, private. Small model: use it for hints, never for grading.
+- **Sync**: SwiftData with CloudKit so iPhone and iPad share progress. Decide at milestone 5; adding it later means model constraints (all properties optional or defaulted, no unique constraints).
+- **Export**: progress and saved code as JSON, so a schema change or reinstall loses nothing.
+- **Accessibility**: visualizer frames need VoiceOver text ("swap index 2 and 5"). Editor must work with VoiceOver and large text.
+- **Timing**: complexity plots need repeated runs and a warm-up; show shape, not exact numbers.
+- **User code access**: Python can read/write app files. Fine for personal use; run code with the working directory set to a scratch folder.
+- **iPad**: plan layouts with `NavigationSplitView` from the start even if iPhone ships first.
+- **Content tooling**: write on Mac in any editor; a script validates YAML, runs solutions, and lints Markdown. Run it in CI.
 
 ## Milestones
 
