@@ -56,7 +56,10 @@ let package = Package(
             "Contracts", "Editor", "Visuals", "Exercises",
             .product(name: "Textual", package: "textual", condition: .when(platforms: [.iOS])),
         ]),
-        .target(name: "Exercises", dependencies: ["Contracts", "Editor"]),
+        .target(name: "Exercises", dependencies: [
+            "Contracts", "Editor",
+            .product(name: "Textual", package: "textual", condition: .when(platforms: [.iOS])),
+        ]),
         .target(name: "Playground", dependencies: ["Contracts", "Editor"]),
         .target(name: "Review", dependencies: ["Contracts"]),
         .target(name: "Tutor", dependencies: ["Contracts"]),
