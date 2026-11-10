@@ -44,3 +44,7 @@ content/_recorded/<hash>.json   {"output": str} or {"trace": Trace}
 `<hash>` is FNV-1a 64-bit of the block's UTF-8 source (trailing whitespace on each line and trailing newlines removed), as 16 lowercase hex digits. The Content loader sets `CodeBlock.recordedOutput` from `output`, and `CodeBlock.recordedTrace` to `_recorded/<hash>.json` when the file has `trace`.
 
 FNV-1a 64: offset basis `0xcbf29ce484222325`, prime `0x100000001b3`, xor each byte then multiply, wrapping at 64 bits.
+
+## Trace stops
+
+`python trace stop=N` counts steps from 1, the way an author reads them: the inline trace pauses showing step N (`Trace.steps[N - 1]`), and the question after the block is asked there. Valid values are `1...steps.count`; the validator checks this.

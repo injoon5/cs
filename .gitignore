@@ -7,7 +7,7 @@ __pycache__/
 .pytest_cache/
 
 # Large build products, fetched by tools/ scripts
-Frameworks/
+/Frameworks
 Resources/python/lib/
 Resources/linux/build/
 .claude/worktrees/

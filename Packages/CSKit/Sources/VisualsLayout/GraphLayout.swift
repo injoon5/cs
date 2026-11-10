@@ -216,10 +216,26 @@ enum GraphLayout {
             for (i, id) in layers[l].enumerated() { order[id] = Double(i) - Double(layers[l].count - 1) / 2 }
         }
 
+        // Edges are straight, so an edge that skips layers can run through a node in between
+        // (A→B over A→C→B in one column). Shift that node's layer aside, top to bottom.
+        var x: [String: Double] = order.mapValues { $0 * spacing }
+        for l in layers.indices.dropFirst() {
+            for (from, to) in edges {
+                guard let a = layer[from], let b = layer[to], a < l, l < b,
+                      let x0 = x[from], let x1 = x[to] else { continue }
+                let lineX = x0 + (x1 - x0) * Double(l - a) / Double(b - a)
+                // A full spacing off the line leaves room for the edge's weight label.
+                guard let hit = layers[l].first(where: { abs((x[$0] ?? 0) - lineX) < spacing }) else { continue }
+                let distance = (x[hit] ?? 0) - lineX
+                let shift = (distance >= 0 ? 1.0 : -1.0) * spacing - distance
+                for id in layers[l] { x[id, default: 0] += shift }
+            }
+        }
+
         var centers: [String: LayoutPoint] = [:]
         for (l, members) in layers.enumerated() {
             for id in members {
-                centers[id] = LayoutPoint(x: (order[id] ?? 0) * spacing, y: Double(l) * levelStep)
+                centers[id] = LayoutPoint(x: x[id] ?? 0, y: Double(l) * levelStep)
             }
         }
         return centers

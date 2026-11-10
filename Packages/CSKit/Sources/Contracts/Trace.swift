@@ -7,8 +7,8 @@ import Foundation
 //   "steps": [{
 //     "line": 3, "event": "line",
 //     "frames": [{"id": "f1", "function": "<module>", "line": 3,
-//                 "locals": [{"name": "a", "value": {"ref": "140234"}}]}],
-//     "heap": {"140234": {"id": "140234", "type": "list", "kind": "list",
+//                 "locals": [{"name": "a", "value": {"ref": "o1"}}]}],
+//     "heap": {"o1": {"id": "o1", "type": "list", "kind": "list",
 //                         "items": [{"repr": "1", "type": "int"}], "omitted": 0}},
 //     "stdout": "hello\n"
 //   }],
@@ -39,7 +39,7 @@ public struct TraceStep: Codable, Sendable, Hashable {
     public var event: TraceEvent
     /// Outermost first. Only frames in user code.
     public var frames: [TraceFrame]
-    /// Objects reachable from the frames, keyed by Python `id()` as a string.
+    /// Objects reachable from the frames, keyed by a run-local label (`o1`, `o2`, ...).
     public var heap: [String: HeapObject]
     /// All stdout up to and including this step.
     public var stdout: String

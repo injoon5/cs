@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2EB1E3B156C3A4DD6DF27044 /* Python.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1AA1FD2938ACBB7C738EA3D7 /* Python.xcframework */; };
+		41A963693EF7841E2F5C628B /* content in Resources */ = {isa = PBXBuildFile; fileRef = A3EED76F9CBFC4E3EEA413F6 /* content */; };
 		E81C85555EDA03A0356B7A32 /* CSKit in Frameworks */ = {isa = PBXBuildFile; productRef = 0183D34699E2159E4C311D10 /* CSKit */; };
 		FAA0D6BD895ECE81D505E12A /* Python.xcframework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 1AA1FD2938ACBB7C738EA3D7 /* Python.xcframework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
@@ -31,6 +32,7 @@
 		1AA1FD2938ACBB7C738EA3D7 /* Python.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = Python.xcframework; path = Frameworks/Python.xcframework; sourceTree = "<group>"; };
 		5DDACBAE461A01214B740DA0 /* python */ = {isa = PBXFileReference; lastKnownFileType = folder; name = python; path = Resources/python; sourceTree = SOURCE_ROOT; };
 		86F3DF2A02AA896F2CD4EADA /* CS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = CS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A3EED76F9CBFC4E3EEA413F6 /* content */ = {isa = PBXFileReference; lastKnownFileType = folder; path = content; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -61,6 +63,7 @@
 		0F2CCE7BD63F2FBB046C9196 = {
 			isa = PBXGroup;
 			children = (
+				A3EED76F9CBFC4E3EEA413F6 /* content */,
 				56A48F10CC37C62BCAA987B0 /* CS */,
 				30F2256FA7D484C4E4E0C4CF /* Packages */,
 				3C7843F5504200053B1BF874 /* Resources */,
@@ -139,7 +142,8 @@
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
 					75F6397AD3A1A346E879A7AE = {
-						DevelopmentTeam = "";
+						DevelopmentTeam = Q3V6F4PZ8J;
+						ProvisioningStyle = Automatic;
 					};
 				};
 			};
@@ -170,6 +174,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				41A963693EF7841E2F5C628B /* content in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,9 +246,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = Q3V6F4PZ8J;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
@@ -361,9 +367,10 @@
 				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
 				CLANG_WARN_UNREACHABLE_CODE = YES;
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
-				DEVELOPMENT_TEAM = "";
+				DEVELOPMENT_TEAM = Q3V6F4PZ8J;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;

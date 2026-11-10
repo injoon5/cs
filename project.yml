@@ -11,7 +11,8 @@ settings:
     SWIFT_STRICT_CONCURRENCY: complete
     SWIFT_TREAT_WARNINGS_AS_ERRORS: YES
     GCC_TREAT_WARNINGS_AS_ERRORS: YES
-    DEVELOPMENT_TEAM: ""
+    DEVELOPMENT_TEAM: Q3V6F4PZ8J  # Personal Team (free provisioning)
+    CODE_SIGN_STYLE: Automatic
 packages:
   CSKit:
     path: Packages/CSKit
@@ -27,6 +28,10 @@ targets:
       - path: Resources/python
         type: folder
         buildPhase: none
+      # Lessons, exercises, cards and recorded outputs, loaded at launch from CS.app/content.
+      - path: content
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: CSKit
         products: [CSKit]
