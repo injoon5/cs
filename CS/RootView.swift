@@ -1,24 +1,37 @@
+import Exercises
+import Lessons
+import Playground
 import Runtime
 import SwiftUI
 
 struct RootView: View {
+    @State private var model = AppModel()
+    /// `-RootTab playground` picks the tab at launch, for checks without UI automation.
+    @State private var tab = UserDefaults.standard.string(forKey: "RootTab") ?? Self.firstTab
+
+    #if DEBUG
+    private static let firstTab = "python"
+    #else
+    private static let firstTab = "learn"
+    #endif
+
     var body: some View {
-        TabView {
+        TabView(selection: $tab) {
             #if DEBUG
-            Tab("Python", systemImage: "ladybug") {
+            Tab("Python", systemImage: "ladybug", value: "python") {
                 PythonSmokeView()
             }
             #endif
-            Tab("Learn", systemImage: "book") {
-                PlaceholderScreen(title: "Learn", symbol: "book")
+            Tab("Learn", systemImage: "book", value: "learn") {
+                LearnView(library: model.library, runner: PythonRuntime.shared, progress: model.progress)
             }
-            Tab("Practice", systemImage: "checklist") {
-                PlaceholderScreen(title: "Practice", symbol: "checklist")
+            Tab("Practice", systemImage: "checklist", value: "practice") {
+                PracticeView(library: model.library, runner: PythonRuntime.shared, progress: model.progress)
             }
-            Tab("Playground", systemImage: "chevron.left.forwardslash.chevron.right") {
-                PlaceholderScreen(title: "Playground", symbol: "chevron.left.forwardslash.chevron.right")
+            Tab("Playground", systemImage: "chevron.left.forwardslash.chevron.right", value: "playground") {
+                PlaygroundView(runner: PythonRuntime.shared)
             }
-            Tab("Review", systemImage: "rectangle.stack") {
+            Tab("Review", systemImage: "rectangle.stack", value: "review") {
                 PlaceholderScreen(title: "Review", symbol: "rectangle.stack")
             }
         }
