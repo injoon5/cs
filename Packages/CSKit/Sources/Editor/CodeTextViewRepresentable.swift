@@ -31,7 +31,9 @@ struct CodeTextViewRepresentable: UIViewRepresentable {
         textView.isSelectable = true
         textView.showsLineNumbers = showsLineNumbers
         textView.isScrollEnabled = isEditable
-        textView.textContainerInset = UIEdgeInsets(top: 8, left: 0, bottom: 8, right: 8)
+        // With a Run control the host floats a button over the bottom edge; let the last line scroll clear of it.
+        let bottom: CGFloat = runControl == nil ? 8 : 88
+        textView.textContainerInset = UIEdgeInsets(top: 8, left: 0, bottom: bottom, right: 8)
 
         let font = UIFont.editorFont(compatibleWith: traits(for: dynamicTypeSize))
         textView.applyFont(font)
