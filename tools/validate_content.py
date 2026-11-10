@@ -8,7 +8,7 @@
 2. Reports loader errors as `path:line: message`.
 3. Runs every python exercise's solution against its tests (must pass) and its starter (should not).
 4. Runs each `predict` block and writes `<root>/_recorded/<hash>.json` {"output": ...}; records each
-   `trace` block as {"trace": ...} and checks that `stop=N` is a step index (0 <= N < steps).
+   `trace` block as {"trace": ...} and checks that `stop=N` is a step number (1 <= N <= steps).
 5. Deletes `_recorded` files no block references; checks ids are unique and cards have answers.
 
 `--check` writes nothing and fails if any recorded file would change (for CI).
@@ -149,8 +149,8 @@ def record_blocks(app_support, blocks: list[dict], report: Report) -> dict[str, 
             if trace["error"]:
                 report.warn(where, f"trace block ends with {trace['error']['type']}: {trace['error']['message']}")
             stop = block.get("stop")
-            if stop is not None and not 0 <= stop < steps:
-                report.error(where, f"trace stop={stop} is outside the trace ({steps} steps, indices 0..{max(steps - 1, 0)})")
+            if stop is not None and not 1 <= stop <= steps:
+                report.error(where, f"trace stop={stop} is outside the trace (steps 1..{steps})")
             wanted[block["hash"]] = encode({"trace": trace})
     return wanted
 
