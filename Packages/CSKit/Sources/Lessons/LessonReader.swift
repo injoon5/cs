@@ -37,9 +37,13 @@ struct LessonReader: View {
                     ForEach(0..<model.revealed, id: \.self) { index in
                         if index > 0 {
                             Divider()
-                                .padding(.vertical, 28)
+                                .padding(.top, 12)
+                                .padding(.bottom, 28)
                         }
+                        // The bottom padding is inside the anchor, so results scrolled into
+                        // view don't sit right against the bottom button.
                         StepView(stepIndex: index, model: model, library: library, runner: runner)
+                            .padding(.bottom, 16)
                             .id(StepAnchor(index: index))
                     }
                     if model.isFinished {
