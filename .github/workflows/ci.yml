@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    # The official Swift image has the toolchain; Python 3.14 is installed next to it.
+    container: swift:6.2
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Swift tests (Foundation-only targets)
+        run: swift test --package-path Packages/CSKit
+
+      - name: Python tests
+        run: |
+          python -m pip install pytest
+          python -m pytest Resources/python tools
+
+      - name: Validate content
+        run: python tools/validate_content.py --check
