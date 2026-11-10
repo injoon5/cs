@@ -31,14 +31,17 @@ public final class ScenePlayer {
     public var speed: PlaybackSpeed = .normal
     /// Set from the environment by the view that owns the player.
     public var reduceMotion = false
+    /// Playback pauses when it reaches this index. Playing again continues past it.
+    public var stopIndex: Int?
 
     @ObservationIgnored private var playback: Task<Void, Never>?
 
     /// Time on each frame at 1×.
-    private static let interval: Duration = .milliseconds(900)
+    private let interval: Duration
 
-    public init(frameCount: Int = 0) {
+    public init(frameCount: Int = 0, interval: Duration = .milliseconds(900)) {
         self.frameCount = frameCount
+        self.interval = interval
     }
 
     public var canStepBackward: Bool { currentIndex > 0 }
@@ -91,17 +94,25 @@ public final class ScenePlayer {
             while !Task.isCancelled {
                 if shouldWait {
                     let speed = self?.speed.rawValue ?? 1
-                    try? await Task.sleep(for: Self.interval / speed)
+                    let interval = self?.interval ?? .milliseconds(900)
+                    try? await Task.sleep(for: interval / speed)
                 }
                 shouldWait = true
                 guard let self, self.isPlaying, !Task.isCancelled else { return }
                 self.advance()
-                if !self.canStepForward {
+                if !self.canStepForward || self.currentIndex == self.stopIndex {
                     self.isPlaying = false
                     return
                 }
             }
         }
+    }
+
+    /// Back to the first frame with the step spring, so the scene and code highlight slide home.
+    public func restart() {
+        pause()
+        guard currentIndex != 0 else { return }
+        withAnimation(stepAnimation) { currentIndex = 0 }
     }
 
     public func pause() {
