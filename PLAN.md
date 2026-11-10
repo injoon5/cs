@@ -165,7 +165,6 @@ Rules:
 - **Narrow inputs.** Leaf views take small `Equatable` values (cell value, role, position), not the model. The `@Observable` player exposes `currentIndex`; only the diagram root reads it.
 - **Fixed geometry.** Cell size depends on the widest value in the whole run, not the current frame, so nothing reflows mid-animation. `.monospacedDigit()` on values and indices.
 - **Scrubbing vs. playing.** Dragging the scrubber updates without animation; step, play and release use a spring. Springs are interruptible, so fast taps never queue.
-- **Reduce Motion.** Moves become crossfades.
 - **Lessons.** Diagrams inside lesson text are static, laid out once and cached by block hash.
 - **Measure, don't guess.** A debug-only benchmark screen loads the worst-case fixtures above. Profile with the Instruments SwiftUI template (Xcode 26) on device: no long view-body updates, no hitches. Try `drawingGroup()` only where a measurement shows it helps.
 
@@ -398,13 +397,13 @@ Teach the shell and how Linux works on a real kernel, not a fake shell.
 
 **Terminal**
 - Ghostty's terminal through libghostty-spm (`GhosttyTerminal`, MIT). Its host-managed I/O backend (`InMemoryTerminalSession`) takes bytes from any source with no pty, so the guest's serial console connects to it through the JS bridge. Metal rendering, touch selection and a SwiftUI view are included. We add a keyboard bar (Tab, Ctrl, Esc, arrows, `|`, `~`, `/`).
-- Pin an exact version (the package releases weekly). Check VoiceOver and the app size increase in the Linux spike. If either fails, fall back to SwiftTerm.
+- Pin an exact version (the package releases weekly). Check the app size increase in the Linux spike. If it's too large, fall back to SwiftTerm.
 
 | Option | Verdict |
 |---|---|
 | libghostty-spm | Use. Full Ghostty renderer as a prebuilt XCFramework (no Zig needed), host-managed I/O, iOS touch selection, most mature (~120 stars, weekly releases). |
 | Termini | Rejected for now. A cleaner SwiftUI API (`processRemoteOutput`, `onTransportWrite`), but young (~20 stars, 0.x) and focused on SSH on iOS. Revisit if it matures. |
-| libghostty-vt alone | Later option. Stable C ABI (1.0), parser and screen state only, so we would draw cells ourselves in SwiftUI. Only worth it if the full renderer fails on size or accessibility. |
+| libghostty-vt alone | Later option. Stable C ABI (1.0), parser and screen state only, so we would draw cells ourselves in SwiftUI. Only worth it if the full renderer fails on size. |
 | SwiftTerm | Fallback. Mature, pure Swift. Weaker escape-sequence coverage and rendering than Ghostty. |
 
 **Units**: files and paths; reading files (`cat`, `less`, `head`); permissions and users; pipes and redirection; text tools (`grep`, `sed`, `awk`, `sort`, `uniq`); `find` and globbing; processes, jobs and signals; environment and `PATH`; shell scripting; `/proc` and `/sys`; git basics.
@@ -471,7 +470,7 @@ Design:
 5. **Progress**: SwiftData models, topic list with completion.
 6. **Visuals**: inline trace first, then array and grid views, lesson diagram blocks, full step-through with frames and arrows, then `viz` animations, trees, graphs.
 7. **Review + complexity plots**.
-8. **Linux spike**: v86 + saved state + libghostty-spm on device. Measure restore time, typing latency, `grep -r` over the man pages, `git log`, `python3 -c 'print(1)'`, memory, app size and VoiceOver. Switch criteria are in the Linux track.
+8. **Linux spike**: v86 + saved state + libghostty-spm on device. Measure restore time, typing latency, `grep -r` over the man pages, `git log`, `python3 -c 'print(1)'`, memory and app size. Switch criteria are in the Linux track.
 9. **Linux track**: image build in CI, check agent, 9P home, units 1–4.
 10. Remaining content, ongoing.
 
