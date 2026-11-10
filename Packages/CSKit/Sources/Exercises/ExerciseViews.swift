@@ -2,7 +2,7 @@
 import Contracts
 import SwiftUI
 
-// Public API used by Lessons and the app. Stubs until the Exercises agent implements them; keep the signatures.
+// Public API used by Lessons and the app. Keep the signatures.
 
 /// The Practice tab: exercises by unit and level.
 public struct PracticeView: View {
@@ -17,11 +17,11 @@ public struct PracticeView: View {
     }
 
     public var body: some View {
-        EmptyView()
+        PracticeList(library: library, runner: runner, progress: progress)
     }
 }
 
-/// One exercise: prompt, editor, tests, hints. Pushed inside a `NavigationStack`.
+/// One exercise: prompt, editor, tests, hints. Pushed inside a `NavigationStack`; it doesn't create one.
 public struct ExerciseView: View {
     let exercise: Exercise
     let runner: any PythonRunning
@@ -34,7 +34,8 @@ public struct ExerciseView: View {
     }
 
     public var body: some View {
-        Text(exercise.title)
+        ExerciseScreen(exercise: exercise, runner: runner, progress: progress)
+            .id(exercise.id)
     }
 }
 #endif
