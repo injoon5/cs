@@ -46,7 +46,7 @@ struct ConsoleView: View {
                     .font(.footnote)
                     .padding(.top, session.lines.isEmpty ? 0 : 8)
             }
-            .font(.system(.callout, design: .monospaced))
+            .font(.system(.subheadline, design: .monospaced))
             .textSelection(.enabled)
             .padding()
         }

@@ -83,9 +83,10 @@ extension UIColor {
 }
 
 extension UIFont {
-    /// SF Mono at the body text style's size for the current Dynamic Type setting.
+    /// SF Mono at the subheadline text style's size for the current Dynamic Type setting.
+    /// Body size wraps ordinary nested loops on the smallest iPhone.
     static func editorFont(compatibleWith traits: UITraitCollection? = nil) -> UIFont {
-        let size = UIFont.preferredFont(forTextStyle: .body, compatibleWith: traits).pointSize
+        let size = UIFont.preferredFont(forTextStyle: .subheadline, compatibleWith: traits).pointSize
         return .monospacedSystemFont(ofSize: size, weight: .regular)
     }
 
