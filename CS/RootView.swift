@@ -6,6 +6,7 @@ import SwiftUI
 
 struct RootView: View {
     @State private var model = AppModel()
+    @Environment(\.scenePhase) private var scenePhase
     /// `-RootTab playground` picks the tab at launch, for checks without UI automation.
     @State private var tab = UserDefaults.standard.string(forKey: "RootTab") ?? Self.firstTab
 
@@ -34,6 +35,9 @@ struct RootView: View {
             Tab("Review", systemImage: "rectangle.stack", value: "review") {
                 PlaceholderScreen(title: "Review", symbol: "rectangle.stack")
             }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { model.flush() }
         }
         .task {
             // Start the interpreter early so the first run doesn't pay for it.
