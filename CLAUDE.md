@@ -102,6 +102,7 @@ Testing and verification agents report results; they don't fix code. Failures go
 
 - Linux (cloud sessions): `swift test` for Foundation-only targets, `python3 -m pytest Resources/python`, `python3 tools/validate_content.py` (runs every reference solution against its tests).
 - Mac: `xcodebuild test` on the latest iPhone simulator, then screenshots in light and dark.
+- Parallel agents share one simulator. Before any simulator action (install, launch, appearance, screenshot), run `tools/simq.sh join <area>`; it blocks until you're first in the queue. Do one batch, then `tools/simq.sh leave <area>`, even after errors. Builds don't need the queue; give each agent its own bundle id (`PRODUCT_BUNDLE_IDENTIFIER=com.injoon5.cs.<area>`) and derived data path.
 - iOS build and UI checks need a Mac. In a cloud session, say clearly what was not verified.
 
 ## Git
