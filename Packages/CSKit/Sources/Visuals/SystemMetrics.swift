@@ -35,6 +35,19 @@ enum SceneFont {
     static let index = Font.caption2.monospacedDigit()
 }
 
+/// SF Mono at subheadline size, matching the editor and console.
+enum CodeFont {
+    static let text = Font.system(.subheadline, design: .monospaced)
+
+    /// Height of one code line at a Dynamic Type size: the font's line height plus room for
+    /// the current-line tint above and below the glyphs.
+    static func lineHeight(_ dynamicTypeSize: DynamicTypeSize) -> CGFloat {
+        let traits = UITraitCollection(preferredContentSizeCategory: UIContentSizeCategory(dynamicTypeSize))
+        let size = UIFont.preferredFont(forTextStyle: .subheadline, compatibleWith: traits).pointSize
+        return UIFont.monospacedSystemFont(ofSize: size, weight: .regular).lineHeight.rounded(.up) + 4
+    }
+}
+
 extension LayoutPoint {
     var cgPoint: CGPoint { CGPoint(x: x, y: y) }
 }

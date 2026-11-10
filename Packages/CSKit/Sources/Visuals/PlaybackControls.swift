@@ -71,7 +71,7 @@ public struct PlaybackControls: View {
 }
 
 /// A 44-point target around each icon, with the system's pressed and disabled looks.
-private struct TransportButtonStyle: ButtonStyle {
+struct TransportButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
