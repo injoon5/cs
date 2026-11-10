@@ -15,7 +15,7 @@ Each step snapshots:
 - `frames`: user frames, outermost first. Frame ids (`f1`, `f2`, ...) are assigned per call and
   stay stable for its life (the tracer keeps frames alive so their `id()` isn't reused).
 - `locals`: in definition order. Dunder names are hidden; so are modules at the top level.
-- `heap`: everything reachable from the locals (and the return value), keyed by `str(id(obj))`.
+- `heap`: everything reachable from the locals (and the return value), keyed by a run-local label (`o1`, `o2`, ...) given in first-seen order, so recordings are deterministic.
   The tracer holds a reference to every object it has put in a heap, so ids are never reused
   during the run. Primitives (`int`, `float`, `complex`, `bool`, `str`, `bytes`, `None`) are
   inline `{"repr", "type"}` values and never in the heap.
@@ -103,7 +103,7 @@ class _Tracer:
         self.tool: int | None = None
         self._busy = False
         self._frame_ids: dict[int, tuple[types.FrameType, str]] = {}
-        self._kept: dict[int, object] = {}
+        self._kept: dict[int, tuple[object, str]] = {}
         self._primitives: dict = {}
         self._stdout = ""
         self._stdout_size = 0
@@ -247,9 +247,9 @@ def _collect_codes(code: types.CodeType, into: dict[int, types.CodeType]) -> Non
 
 
 class _Heap:
-    """Builds one step's heap. `kept` holds every object ever referenced, so ids stay unique."""
+    """Builds one step's heap. `kept` holds every object ever referenced with its label, so ids stay unique."""
 
-    def __init__(self, kept: dict[int, object], primitives: dict):
+    def __init__(self, kept: dict[int, tuple[object, str]], primitives: dict):
         self.kept = kept
         self.primitives = primitives  # Shared encodings of ints and short strs, per run.
         self.objects: dict[str, dict] = {}
@@ -272,9 +272,12 @@ class _Heap:
         if kind in _PRIMITIVES:
             return {"repr": _short_repr(value), "type": kind.__name__}
         key = id(value)
-        ref = str(key)
+        entry = self.kept.get(key)
+        if entry is None:
+            entry = (value, f"o{len(self.kept) + 1}")
+            self.kept[key] = entry
+        ref = entry[1]
         if ref not in self.objects:
-            self.kept[key] = value
             self.objects[ref] = None  # Reserved; filled in by `drain`.
             self.pending.append(value)
         return {"ref": ref}
@@ -282,7 +285,7 @@ class _Heap:
     def drain(self) -> None:
         while self.pending:
             obj = self.pending.popleft()
-            ref = str(id(obj))
+            ref = self.kept[id(obj)][1]
             if self.filled >= MAX_HEAP:
                 self.objects[ref] = _heap_object(ref, obj, "other", repr="…")
                 continue

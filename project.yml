@@ -27,6 +27,10 @@ targets:
       - path: Resources/python
         type: folder
         buildPhase: none
+      # Lessons, exercises, cards and recorded outputs, loaded at launch from CS.app/content.
+      - path: content
+        type: folder
+        buildPhase: resources
     dependencies:
       - package: CSKit
         products: [CSKit]
