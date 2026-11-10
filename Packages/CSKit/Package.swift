@@ -14,11 +14,17 @@ let package = Package(
     products: [
         .library(name: "CSKit", targets: [
             "Contracts", "Content", "Runtime", "Editor", "Visuals", "VisualsLayout",
-            "Lessons", "Exercises", "Review", "Tutor", "Linux", "Store",
+            "Lessons", "Exercises", "Playground", "Review", "Tutor", "Linux", "Store",
         ]),
+        // Dumps loaded content as JSON for tools/validate_content.py, so parsing lives in one place.
+        .executable(name: "cs-content", targets: ["ContentTool"]),
     ],
     dependencies: [
         .package(url: "https://github.com/jpsim/Yams.git", from: "5.1.0"),
+        .package(url: "https://github.com/krzyzanowskim/STTextView.git", from: "2.4.1"),
+        .package(url: "https://github.com/krzyzanowskim/STTextView-Plugin-Neon.git", revision: "482b73cf442b2262525a0aa4355603b6467b6084"), // 0.8.1, pinned by revision: it depends on Neon by branch
+        .package(url: "https://github.com/krzyzanowskim/STTextView-Plugin-TextFormation.git", from: "0.7.0"),
+        .package(url: "https://github.com/gonzalezreal/textual.git", from: "0.5.0"),
     ],
     targets: [
         .target(name: "Contracts"),
@@ -36,20 +42,36 @@ let package = Package(
             ]
         ),
         .target(name: "Runtime", dependencies: ["Contracts", "CPythonBridge"]),
-        .target(name: "Editor", dependencies: ["Contracts"]),
+        // UI libraries are iOS-only dependencies, so `swift test` on macOS and Linux never builds them.
+        .target(name: "Editor", dependencies: [
+            "Contracts",
+            .product(name: "STTextView", package: "STTextView", condition: .when(platforms: [.iOS])),
+            .product(name: "STTextView-Plugin-Neon", package: "STTextView-Plugin-Neon", condition: .when(platforms: [.iOS])),
+            .product(name: "TextFormationPlugin", package: "STTextView-Plugin-TextFormation", condition: .when(platforms: [.iOS])),
+        ]),
         .target(name: "VisualsLayout", dependencies: ["Contracts"]),
         .target(name: "Visuals", dependencies: ["Contracts", "VisualsLayout"]),
-        .target(name: "Lessons", dependencies: ["Contracts"]),
-        .target(name: "Exercises", dependencies: ["Contracts"]),
+        // Screen areas may depend on the component areas Editor and Visuals, and Lessons embeds Exercises.
+        .target(name: "Lessons", dependencies: [
+            "Contracts", "Editor", "Visuals", "Exercises",
+            .product(name: "Textual", package: "textual", condition: .when(platforms: [.iOS])),
+        ]),
+        .target(name: "Exercises", dependencies: [
+            "Contracts", "Editor",
+            .product(name: "Textual", package: "textual", condition: .when(platforms: [.iOS])),
+        ]),
+        .target(name: "Playground", dependencies: ["Contracts", "Editor"]),
         .target(name: "Review", dependencies: ["Contracts"]),
         .target(name: "Tutor", dependencies: ["Contracts"]),
         .target(name: "Linux", dependencies: ["Contracts"]),
-        .target(name: "Store", dependencies: ["Contracts"]),
+        .target(name: "Store", dependencies: ["Contracts", "Review"]),
+        .executableTarget(name: "ContentTool", dependencies: ["Content"]),
 
         .testTarget(name: "ContractsTests", dependencies: ["Contracts"]),
         .testTarget(name: "ContentTests", dependencies: ["Content"]),
         .testTarget(name: "VisualsLayoutTests", dependencies: ["VisualsLayout"]),
         .testTarget(name: "ReviewTests", dependencies: ["Review"]),
         .testTarget(name: "RuntimeTests", dependencies: ["Runtime"]),
+        .testTarget(name: "StoreTests", dependencies: ["Store"]),
     ]
 )
