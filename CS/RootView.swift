@@ -1,8 +1,11 @@
+import Exercises
+import Lessons
 import Playground
 import Runtime
 import SwiftUI
 
 struct RootView: View {
+    @State private var model = AppModel()
     /// `-RootTab playground` picks the tab at launch, for checks without UI automation.
     @State private var tab = UserDefaults.standard.string(forKey: "RootTab") ?? Self.firstTab
 
@@ -20,10 +23,10 @@ struct RootView: View {
             }
             #endif
             Tab("Learn", systemImage: "book", value: "learn") {
-                PlaceholderScreen(title: "Learn", symbol: "book")
+                LearnView(library: model.library, runner: PythonRuntime.shared, progress: model.progress)
             }
             Tab("Practice", systemImage: "checklist", value: "practice") {
-                PlaceholderScreen(title: "Practice", symbol: "checklist")
+                PracticeView(library: model.library, runner: PythonRuntime.shared, progress: model.progress)
             }
             Tab("Playground", systemImage: "chevron.left.forwardslash.chevron.right", value: "playground") {
                 PlaygroundView(runner: PythonRuntime.shared)
