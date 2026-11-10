@@ -7,7 +7,7 @@ Personal iPhone app for learning algorithms and CS, with embedded Python. `PLAN.
 This app should feel like Apple made it. Details are the work, not polish after the work.
 
 - Follow the design rules in `PLAN.md` (Design section). System components first. Nothing custom where Apple has a control.
-- Every screen: light and dark, smallest and largest current iPhone, keyboard up and down, empty, loading, error and long-content states.
+- Target device is iPhone 17 (simulator "iPhone 17", iOS 27.0 runtime). Every screen: light and dark, keyboard up and down, empty, loading, error and long-content states. Smaller phones are not a target.
 - Motion: springs, interruptible, no linear easing. Animate state changes that move things; don't animate things that only appear.
 - Layout: standard system spacing and margins, 44pt minimum tap targets, aligned edges, no layout shift when content loads or numbers change (`.monospacedDigit()` for counters and timers).
 - Type: system text styles only, SF Mono for code. Matching SF Symbol weight to adjacent text.
