@@ -24,7 +24,7 @@ struct UnitView: View {
             }
             if !unit.exercises.isEmpty {
                 Section("Exercises") {
-                    ForEach(unit.exercises) { exercise in
+                    ForEach(exercisesByLevel) { exercise in
                         NavigationLink(value: LearnRoute.exercise(exercise.id)) {
                             ExerciseRowLabel(exercise: exercise, state: progress.exerciseProgress(exercise.id).state)
                         }
@@ -39,6 +39,18 @@ struct UnitView: View {
             }
         }
         .navigationTitle(unit.title)
+    }
+
+    /// Warm-up, core, stretch; authored order within a level.
+    private var exercisesByLevel: [Exercise] {
+        let levels = ExerciseLevel.allCases
+        return unit.exercises.enumerated()
+            .sorted { a, b in
+                let la = levels.firstIndex(of: a.element.level) ?? 0
+                let lb = levels.firstIndex(of: b.element.level) ?? 0
+                return (la, a.offset) < (lb, b.offset)
+            }
+            .map(\.element)
     }
 }
 

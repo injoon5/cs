@@ -99,36 +99,59 @@ struct PredictView: View {
 
     var body: some View {
         let result = model.predictResults[id]
-        VStack(alignment: .leading, spacing: 12) {
-            CodeBox {
-                CodeEditor(code: code.source)
-            }
-            TextField("Output", text: answer, axis: .vertical)
-                .font(.system(.body, design: .monospaced))
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .keyboardType(.asciiCapable)
-                .lineLimit(1...12)
-                .focused($focused)
-                .disabled(!model.acceptsAnswers(id.step))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 11)
-                .frame(minHeight: 44)
-                .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 12))
-                .foregroundStyle(result.map { $0.isCorrect ? Color.primary : Color.secondary } ?? Color.primary)
-            if let result {
-                ResultLabel(isCorrect: result.isCorrect)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Output")
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(.secondary)
-                    CodeBox {
-                        OutputText(chunks: [OutputChunk(stream: .stdout, text: result.expected)])
+        // A step passed on an earlier visit shows the output without a verdict.
+        let expected = result?.expected ?? (model.isChecked(id.step) ? code.recordedOutput : nil)
+        ScrollViewReader { proxy in
+            VStack(alignment: .leading, spacing: 12) {
+                CodeBox {
+                    CodeEditor(code: code.source)
+                }
+                if result != nil || !model.isChecked(id.step) {
+                    answerField(result: result)
+                }
+                if let result {
+                    ResultLabel(isCorrect: result.isCorrect)
+                }
+                if let expected {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Output")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        CodeBox {
+                            OutputText(chunks: [OutputChunk(stream: .stdout, text: expected)])
+                        }
                     }
+                }
+            }
+            .onChange(of: focused) { _, isFocused in
+                guard isFocused else { return }
+                // Keep the field above the keyboard once the keyboard has moved up.
+                Task { @MainActor in
+                    try? await Task.sleep(for: .milliseconds(350))
+                    withAnimation(.spring) { proxy.scrollTo(fieldID, anchor: UnitPoint(x: 0.5, y: 0.9)) }
                 }
             }
         }
     }
+
+    private func answerField(result: PredictResult?) -> some View {
+        TextField("Output", text: answer, axis: .vertical)
+            .font(.system(.body, design: .monospaced))
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
+            .keyboardType(.asciiCapable)
+            .lineLimit(1...12)
+            .focused($focused)
+            .disabled(!model.acceptsAnswers(id.step))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 11)
+            .frame(minHeight: 44)
+            .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 12))
+            .foregroundStyle(result.map { $0.isCorrect ? Color.primary : Color.secondary } ?? Color.primary)
+            .id(fieldID)
+    }
+
+    private var fieldID: BlockID { id }
 
     private var answer: Binding<String> {
         Binding(

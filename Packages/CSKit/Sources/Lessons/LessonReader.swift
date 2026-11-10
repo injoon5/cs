@@ -12,7 +12,7 @@ struct LessonReader: View {
     @State private var model: ReaderModel
     @Environment(\.dismiss) private var dismiss
 
-    private static let finishID = "finish"
+    private static let finishID = StepAnchor.finish
 
     init(
         lesson: Lesson,
@@ -40,7 +40,7 @@ struct LessonReader: View {
                                 .padding(.vertical, 28)
                         }
                         StepView(stepIndex: index, model: model, library: library, runner: runner)
-                            .id(index)
+                            .id(StepAnchor(index: index))
                     }
                     if model.isFinished {
                         FinishView(nextLesson: nextLesson)
@@ -68,7 +68,7 @@ struct LessonReader: View {
             .onAppear {
                 model.recordOpened()
                 if model.revealed > 1 {
-                    proxy.scrollTo(model.currentStep, anchor: .top)
+                    proxy.scrollTo(StepAnchor(index: model.currentStep), anchor: .top)
                 }
             }
             #if DEBUG
@@ -152,11 +152,15 @@ struct LessonReader: View {
         switch action {
         case .check:
             hideKeyboard()
-            Task { await model.check() }
+            Task {
+                await model.check()
+                // Results appear under the question; bring them into view.
+                scroll(to: StepAnchor(index: model.currentStep), anchor: .bottom, proxy: proxy)
+            }
         case .next:
             hideKeyboard()
             model.reveal()
-            scroll(to: model.currentStep, proxy: proxy)
+            scroll(to: StepAnchor(index: model.currentStep), proxy: proxy)
         case .finish:
             model.finish()
             scroll(to: Self.finishID, proxy: proxy)
@@ -168,17 +172,27 @@ struct LessonReader: View {
     }
 
     /// New content appears in place; the scroll is what moves.
-    private func scroll(to id: some Hashable, proxy: ScrollViewProxy) {
+    private func scroll(to id: some Hashable, anchor: UnitPoint = .top, proxy: ScrollViewProxy) {
         Task { @MainActor in
             await Task.yield()
             withAnimation(.spring(duration: 0.5)) {
-                proxy.scrollTo(id, anchor: .top)
+                proxy.scrollTo(id, anchor: anchor)
             }
         }
     }
 
     private func hideKeyboard() {
         UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+    }
+}
+
+/// Scroll target for a step. Its own type, so it never matches the `ForEach` ids inside steps.
+enum StepAnchor: Hashable {
+    case step(Int)
+    case finish
+
+    init(index: Int) {
+        self = .step(index)
     }
 }
 

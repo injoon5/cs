@@ -45,8 +45,8 @@ enum LessonsLaunchOptions {
             model.debugShow(steps: model.stepCount)
             model.finish()
         }
-        try? await Task.sleep(for: .milliseconds(300))
-        proxy.scrollTo(finish ? AnyHashable("finish") : AnyHashable(model.currentStep), anchor: finish ? .bottom : .top)
+        try? await Task.sleep(for: .milliseconds(800))
+        proxy.scrollTo(finish ? StepAnchor.finish : StepAnchor(index: model.currentStep), anchor: finish ? .bottom : .top)
     }
     #endif
 }

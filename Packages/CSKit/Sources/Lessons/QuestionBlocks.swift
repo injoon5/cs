@@ -19,7 +19,7 @@ struct ChoiceView: View {
                     if index > 0 {
                         Divider().padding(.leading, 52)
                     }
-                    row(index: index, option: option, checked: result != nil)
+                    row(index: index, option: option, checked: result != nil || model.isChecked(id.step))
                 }
             }
             .background(Color(.secondarySystemBackground), in: .rect(cornerRadius: 12))
@@ -52,7 +52,7 @@ struct ChoiceView: View {
             .contentShape(.rect)
         }
         .buttonStyle(.plain)
-        .disabled(!model.acceptsAnswers(id.step))
+        .allowsHitTesting(model.acceptsAnswers(id.step))
         .accessibilityAddTraits(isSelected ? .isSelected : [])
         .accessibilityValue(checked ? (option.isCorrect ? "Correct answer" : "") : "")
     }
@@ -116,6 +116,7 @@ struct ArrangeView: View {
                 .moveDisabled(!editable)
             }
             .listStyle(.plain)
+            .listSectionSeparator(.hidden)
             .environment(\.editMode, .constant(editable ? .active : .inactive))
             .scrollDisabled(true)
             .scrollContentBackground(.hidden)
@@ -142,8 +143,12 @@ struct ArrangeView: View {
         }
     }
 
+    /// A step passed on an earlier visit shows the lines in order.
     private var order: [Int] {
-        model.arrangeOrders[id] ?? Array(lines.indices)
+        if model.isChecked(id.step) && model.arrangeResults[id] == nil {
+            return Array(lines.indices)
+        }
+        return model.arrangeOrders[id] ?? Array(lines.indices)
     }
 }
 
