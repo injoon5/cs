@@ -175,6 +175,6 @@ merge([], []) == []
 
 ---
 
-[Merge two sorted arrays](exercises/merge-sorted-arrays.md)
+[Merge two sorted lists](exercises/merge-sorted-arrays.md)
 
 [Count inversions](exercises/count-inversions.md)
