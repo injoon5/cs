@@ -299,25 +299,29 @@ The first index where the predicate is true.
 
 **Validator** (`tools/validate_content.py`, run in CI): checks frontmatter and ids (unique, stable), checks that links resolve, runs every solution against its tests, records `predict` outputs and `trace` JSON, checks that each `stop=N` exists, and boots the Linux image to run each `shell solution` against its `check`.
 
-Curriculum (first pass):
+Curriculum (algorithms track, folder `NN-<unit id>`):
 1. Complexity: Big-O, amortized cost
 2. Arrays and strings: two pointers, sliding window, prefix sums
-3. Hashing
-4. Stacks and queues, monotonic stack
-5. Linked lists
-6. Recursion and backtracking
-7. Sorting: insertion, merge, quick, heap, counting
-8. Binary search, on answers too
+3. Hashing: how hash tables work, sets and dicts, counting and grouping, complement lookups
+4. Stacks and queues: brackets, `deque`, monotonic stack, monotonic queue
+5. Linked lists: pointers, dummy heads, reversal, fast and slow pointers, merging
+6. Recursion and backtracking: base cases, call stack, subsets, permutations, pruning
+7. Sorting: insertion, merge, quick, heap, counting; stability and `key=`
+8. Binary search, on answers too; `bisect`
 9. Trees: traversal, BST, balanced trees overview
-10. Heaps and priority queues
-11. Graphs: BFS, DFS, topological sort
+10. Heaps and priority queues: `heapq`, top k, k-way merge, two heaps
+11. Graphs: representations, BFS (grids too), DFS, topological sort
 12. Shortest paths: Dijkstra, Bellman-Ford, Floyd-Warshall
-13. Union-find, MST
+13. Union-find, MST (Kruskal, Prim)
 14. Dynamic programming: 1D, 2D, knapsack, LIS, intervals
-15. Greedy
+15. Greedy: exchange argument, intervals, sweep line
 16. Tries, segment trees, Fenwick trees
-17. Bits and number representation
-18. Extras: how CPython runs code, memory, caching
+17. Strings: building strings, rolling hash, KMP
+18. Bits and number representation
+19. Math: gcd, primes and sieves, modular arithmetic, fast power, counting
+20. Under the hood: how CPython runs code, memory, caching
+
+Strings (17) and Math (19) were added to the first pass so string matching and number theory have a home; intervals live in Greedy.
 
 Write lessons in my own words (draft with Claude, then edit). Don't copy textbook text.
 
