@@ -1,5 +1,5 @@
 ---
-id: merge-sorted-lists
+id: merge-sorted-arrays
 title: Merge two sorted lists
 level: warmup
 ---
